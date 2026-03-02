@@ -1,0 +1,27 @@
+services:
+  # Backend: PocketBase
+  pocketbase:
+    build:
+      context: .
+      dockerfile: Dockerfile.pb
+    container_name: pocketbase
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./pb_data:/pb/pb_data # Vital para no perder tus usuarios/colecciones
+
+  # Frontend: VueJS (Vite)
+  tabaterio:
+    build:
+      context: .
+      dockerfile: Dockerfile.vue
+    container_name: tabaterio
+    restart: unless-stopped
+    ports:
+      - "3333:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules # Evita que se sobrescriban los módulos del contenedor con los locales
+    depends_on:
+      - pocketbase
