@@ -15,9 +15,9 @@ docker compose up
 ```
 
 ### PocketBase URL
-(http://127.0.0.1:8080)
+http://127.0.0.1:8080
 
 ### App URL
-(http://127.0.0.1:3333)
+http://127.0.0.1:3333
 
 
