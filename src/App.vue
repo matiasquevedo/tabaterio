@@ -9,7 +9,9 @@ import Nav from './layout/Nav.vue'
     <Nav />
 
     <div>
-      <RouterView />
+      <n-message-provider>
+        <RouterView />
+      </n-message-provider>
     </div>
   </div>
 </template>

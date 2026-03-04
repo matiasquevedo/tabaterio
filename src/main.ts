@@ -9,8 +9,13 @@ import router from './router'
 
 const app = createApp(App)
 
-app.use(naive)
 app.use(createPinia())
+app.use(naive)
 app.use(router)
 
-app.mount('#app')
+// app.mount('#app')
+router.isReady().then(() => {
+  app.mount('#app');
+});
+
+

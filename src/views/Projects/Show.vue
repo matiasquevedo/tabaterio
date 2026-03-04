@@ -4,7 +4,7 @@
     <template #header>
       <div class="flex justify-between items-start">
         <h1 class="font-semibold text-2xl leading-tight">
-            <Color :color="project.color"/> {{project.name}} ({{project.expand?.tasks_via_project.length}} tareas)
+            <Color :color="project.color"/> {{project.name}} ({{project.expand?.tasks_via_project.length>0?project.expand?.tasks_via_project.length:0}} tareas)
         </h1>
 
         {{pb.realtime.isConnected}}
@@ -45,6 +45,7 @@
       </div>
     </div>
 
+      <DeleteProjectModal :id="project.id" :name="project.name" />
 
         <pre><code>
          {{project}} 
@@ -60,6 +61,9 @@ import Color from '@/components/ColorCircle.vue'
 import CreateTaskModal from '@/components/tasks/CreateTaskModal.vue'
 import DeleteTaskModal from '@/components/tasks/DeleteTaskModal.vue'
 import UpdateTaskModal from '@/components/tasks/UpdateTaskModal.vue'
+
+import DeleteProjectModal from '@/components/projects/DeleteProjectModal.vue'
+
 import pb from '@/lib/pocketbase';
 
 const props = defineProps({ id: { type: String, required: true } });

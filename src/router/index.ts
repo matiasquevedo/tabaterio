@@ -4,6 +4,9 @@ import NotFound from '../views/NotFound.vue'
 import ProjectsIndex from '../views/Projects/Index.vue'
 import ProjectsShow from '../views/Projects/Show.vue'
 
+import { useCounterStore } from '@/stores/counter'
+
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -41,7 +44,12 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  document.title = to.meta.title;
+  const store = useCounterStore()
+
+  console.log(`valor en el router:${store.count}`)
+
+  let appName = 'Tabaterio'
+  document.title = ` -> ${to.meta.title} | ${appName}`;
   next();
 });
 

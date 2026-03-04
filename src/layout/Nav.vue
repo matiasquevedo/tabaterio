@@ -15,10 +15,6 @@
 	      		<div>
 	      			<RouterLink :to="{ name: 'proyectos'}">Proyectos</RouterLink>	      			
 	      		</div>
-	      		<div>
-	      			<RouterLink :to="{ name: 'about'}" >Ejemplito</RouterLink>	      			
-	      		</div>
-
 
 
 

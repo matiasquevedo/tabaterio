@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
+    "@vueuse/core": "^14.2.1",
+    "date-fns": "^4.1.0",
     "pinia": "^3.0.4",
     "pocketbase": "^0.26.8",
     "tailwindcss": "^4.2.1",
