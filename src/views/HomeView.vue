@@ -4,6 +4,9 @@
       <NewTimeEntry />
     </div>
 
+    <div class="p-6">
+      <TimeEntriesIndexTable />
+    </div>
 
     <div class="p-6">
       <TheWelcome />
@@ -17,4 +20,5 @@
 import TheWelcome from '../components/TheWelcome.vue'
 
 import NewTimeEntry from '@/components/time_entries/NewTimeEntry.vue'
+import TimeEntriesIndexTable from '@/components/time_entries/TimeEntriesIndexTable.vue'
 </script>

@@ -49,7 +49,7 @@ router.beforeEach((to, from, next) => {
   console.log(`valor en el router:${store.count}`)
 
   let appName = 'Tabaterio'
-  document.title = ` -> ${to.meta.title} | ${appName}`;
+  document.title = `${to.meta.title} | ${appName}`;
   next();
 });
 

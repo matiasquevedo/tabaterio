@@ -26,7 +26,7 @@ export default defineConfig({
     proxy: {
       // Cuando Vue pida algo que empiece por /api o /_, mándalo al contenedor
       '^/(api|_)/': {
-        target: 'http://pocketbase:8080',
+        target: 'http://pocketbase:7878',
         changeOrigin: true,
       }
     }

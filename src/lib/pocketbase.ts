@@ -1,7 +1,7 @@
 import PocketBase from 'pocketbase';
 
 // Creamos una única instancia para TODA la aplicación
-const pb = new PocketBase('http://127.0.0.1:8080');
+const pb = new PocketBase('http://127.0.0.1:7878');
 
 // Opcional: Desactivar el auto-cancellation si tienes peticiones muy seguidas
 pb.autoCancellation(false);
