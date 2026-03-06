@@ -2,15 +2,22 @@
   <div class="timer-container p-4 bg-zinc-900 rounded-lg border border-zinc-800">
 
     <div v-if="isTabataMode" class="flex justify-center gap-8 mb-4">
-      <div :class="['text-center p-2 rounded-md transition-all w-32', currentPhase === 'work' ? 'bg-green-900/40 ring-1 ring-green-500' : 'opacity-40']">
-        <div class="text-xs uppercase text-green-400 font-bold">Trabajando</div>
-        <div class="text-2xl font-mono text-white">{{ formatCountdown(remainingTime) }}</div>
+      <div v-if="currentPhase === 'prepare'" class="text-center p-2 rounded-md bg-yellow-900/40 ring-1 ring-yellow-500 w-64 transition-all">
+        <div class="text-xs uppercase text-yellow-400 font-bold tracking-widest">¡Prepárate!</div>
+        <div class="text-3xl font-mono text-white">{{ remainingTime }}</div>
       </div>
-      
-      <div :class="['text-center p-2 rounded-md transition-all w-32', currentPhase === 'pause' ? 'bg-blue-900/40 ring-1 ring-blue-500' : 'opacity-40']">
-        <div class="text-xs uppercase text-blue-400 font-bold">Descanso</div>
-        <div class="text-2xl font-mono text-white">{{ formatCountdown(remainingTime) }}</div>
-      </div>
+
+      <template v-else>
+        <div :class="['text-center p-2 rounded-md transition-all w-32', currentPhase === 'work' ? 'bg-green-900/40 ring-1 ring-green-500' : 'opacity-40']">
+          <div class="text-xs uppercase text-green-400 font-bold">Trabajando</div>
+          <div class="text-2xl font-mono text-white">{{ formatCountdown(remainingTime) }}</div>
+        </div>
+        
+        <div :class="['text-center p-2 rounded-md transition-all w-32', currentPhase === 'pause' ? 'bg-blue-900/40 ring-1 ring-blue-500' : 'opacity-40']">
+          <div class="text-xs uppercase text-blue-400 font-bold">Descanso</div>
+          <div class="text-2xl font-mono text-white">{{ formatCountdown(remainingTime) }}</div>
+        </div>
+      </template>
     </div>
 
     <div v-else class="flex justify-center mb-4">
@@ -28,42 +35,49 @@
       class="flex flex-wrap items-center justify-between gap-3"
     >
       <n-form-item path="description" class="flex-grow">
-        <n-input v-model:value="formValue.description" placeholder="¿Qué estás haciendo?" />
+        <n-input v-model:value="formValue.description" :disabled="run" placeholder="¿Qué estás haciendo?" />
       </n-form-item>
 
       <n-form-item>
         <AddProjectButton 
+          :disabled="run"
           @select-project="(n) => formValue.project = n"
           @select-task="(t) => formValue.task = t" 
         />
       </n-form-item>
 
-      <div class="flex gap-2 items-center">
-        <n-form-item label="Trabajo" label-placement="left">
-          <n-input-number v-model:value="formValue.work" :min="0" :disabled="run" style="width: 85px" placeholder="Min" />
-        </n-form-item>
-        <n-form-item label="Pausa" label-placement="left">
-          <n-input-number v-model:value="formValue.pause" :min="0" :disabled="run" style="width: 85px" placeholder="Min" />
-        </n-form-item>
-      </div>
+      <n-form-item>
+        <AddTagSelect 
+          :disabled="run"
+          @select-tag="(n) => formValue.tag = n"
+        />
+      </n-form-item>
+
+      <n-form-item label="Trabajo">
+        <n-input-number v-model:value="formValue.work" :min="0" :disabled="run" style="width: 85px" placeholder="Min" />
+      </n-form-item>
+
+      <n-form-item label="Pausa">
+        <n-input-number v-model:value="formValue.pause" :min="0" :disabled="run" style="width: 85px" placeholder="Min" />
+      </n-form-item>
 
       <n-form-item>
-        <n-switch v-model:value="formValue.non_billable">
+        <n-switch v-model:value="formValue.non_billable" :disabled="run">
           <template #icon>💲</template>
         </n-switch>
       </n-form-item>
 
-      <div class="flex flex-col items-end px-4 min-w-[100px]">
-        <span class="text-[10px] text-zinc-500 uppercase">Tiempo Total</span>
+      <n-form-item>
         <span :class="['text-xl font-mono font-bold transition-colors', run ? 'text-green-500' : 'text-zinc-600']">
           {{ formattedTotalTime }}
         </span>
-      </div>
+      </n-form-item>
 
       <n-form-item>
         <n-button 
           @click="handleToggle" 
           :type="run ? 'error' : 'primary'"
+          :loading="formValue.processing"
           class="w-24"
           strong
           secondary
@@ -74,8 +88,11 @@
     </n-form>
 
     <div class="flex justify-between items-center mt-4 px-2 text-[10px] text-zinc-600">
-      <span>Modo: {{ isTabataMode ? 'Tabata (Ciclos)' : 'Infinito' }}</span>
-      <span v-if="run">Fase: {{ currentPhase }} | Segundos restantes: {{ remainingTime }}s</span>
+      <div class="flex gap-4">
+        <span>Modo: {{ isTabataMode ? 'Tabata' : 'Infinito' }}</span>
+        <span v-if="currentEntryId" class="text-blue-500">Sincronizado: {{ currentEntryId }}</span>
+      </div>
+      <span v-if="run">Estado: {{ currentPhase }} | Restante: {{ remainingTime }}s</span>
     </div>
   </div>
 </template>
@@ -88,22 +105,24 @@ import { useTimeoutPoll } from '@vueuse/core'
 import { useSound } from '@vueuse/sound'
 import { formatISO } from 'date-fns'
 import AddProjectButton from '@/components/time_entries/AddProjectButton.vue'
+import AddTagSelect from '@/components/time_entries/AddTagSelect.vue'
 import pb from '@/lib/pocketbase'
 
-// IMPORTANTE: Asegúrate de que las rutas a los sonidos sean correctas
 import StartSound from '@/assets/sounds/start.mp3'
 import EndSound from '@/assets/sounds/end.mp3'
 
 // --- SONIDOS ---
-const { play: playStart } = useSound(EndSound)
-const { play: playEnd } = useSound(StartSound)
+const { play: playPrepSound } = useSound(StartSound)
+const { play: playWorkEnding } = useSound(EndSound)
 
 // --- ESTADO ---
 const formRef = ref<FormInst | null>(null)
 const message = useMessage()
 const run = ref(false)
-const currentPhase = ref<'work' | 'pause'>('work')
+const currentPhase = ref<'prepare' | 'work' | 'pause'>('work')
 const remainingTime = ref(0) 
+const currentEntryId = ref<string | null>(null) // ID del registro en PocketBase
+const autoSaveCounter = ref(0) // Para guardar cada 30 segundos
 
 const formValue = ref({
   description: '',
@@ -115,12 +134,11 @@ const formValue = ref({
   non_billable: false,
   project: null,
   task: null,
+  tag: null,
   processing: false,
 })
 
-const rules = {
-  description: { required: false }
-}
+const rules = { description: { required: false } }
 
 // --- LÓGICA COMPUTADA ---
 
@@ -145,35 +163,40 @@ const formatCountdown = (totalSeconds: number) => {
 // --- EL CORAZÓN DEL TIMER ---
 
 async function tick() {
-  // MODO INFINITO
-  if (!isTabataMode.value) {
+  // 1. Incrementar tiempo y auto-guardado
+  if (!isTabataMode.value || currentPhase.value === 'work') {
     formValue.value.duration++
-    return
+    autoSaveCounter.value++
+    
+    // Auto-guardado cada 30 segundos para evitar pérdida de datos
+    if (autoSaveCounter.value >= 30) {
+      updateEntryInDB()
+      autoSaveCounter.value = 0
+    }
   }
 
-  // MODO TABATA
-  if (remainingTime.value > 0) {
+  // 2. Lógica de Modos
+  if (!isTabataMode.value) return
+
+  if (currentPhase.value === 'prepare') {
+    if (remainingTime.value === 3) playPrepSound()
     remainingTime.value--
-
-    // --- LÓGICA DE SONIDO ANTES DE ACABAR ---
-    // Si quedan 3 segundos, disparamos el sonido
-    if (remainingTime.value === 3) {
-       if (currentPhase.value === 'work') {
-         playStart() // Sonido de aviso que se acaba el trabajo
-       } else {
-         playEnd()   // Sonido de aviso que se acaba el descanso
-       }
+    if (remainingTime.value <= 0) {
+      currentPhase.value = 'work'
+      remainingTime.value = formValue.value.work * 60
+      message.success('¡A trabajar!')
     }
-
-    if (currentPhase.value === 'work') {
-      formValue.value.duration++
+  } else if (remainingTime.value > 0) {
+    remainingTime.value--
+    if (remainingTime.value === 3) {
+       currentPhase.value === 'work' ? playWorkEnding() : playPrepSound()
     }
   } else {
-    // Cambio de fase automático cuando llega a 0
+    // Cambio de fase
     if (currentPhase.value === 'work') {
       currentPhase.value = 'pause'
       remainingTime.value = formValue.value.pause * 60
-      message.warning('¡Descanso iniciado!')
+      message.warning('Descanso...')
     } else {
       currentPhase.value = 'work'
       remainingTime.value = formValue.value.work * 60
@@ -184,50 +207,89 @@ async function tick() {
 
 const { resume, pause } = useTimeoutPoll(tick, 1000, { immediate: false })
 
-// --- ACCIONES ---
+// --- ACCIONES DE POCKETBASE ---
 
 const handleToggle = () => {
   formRef.value?.validate(async (errors) => {
     if (errors) return
 
     if (!run.value) {
-      run.value = true
-      formValue.value.start = formatISO(new Date())
-      
-      if (isTabataMode.value) {
-        currentPhase.value = 'work'
-        remainingTime.value = formValue.value.work * 60
-      }
-      
-      resume()
-      message.info(isTabataMode.value ? 'Ciclo iniciado' : 'Cronómetro iniciado')
+      await startSession()
     } else {
-      run.value = false
-      pause()
-      formValue.value.end = formatISO(new Date())
-      await saveEntry()
+      await stopSession()
     }
   })
 }
 
-const saveEntry = async () => {
+const startSession = async () => {
   formValue.value.processing = true
   try {
-    const dataToSend = { ...formValue.value }
-    await pb.collection('time_entries').create(dataToSend)
-    message.success('Entrada guardada')
-    resetForm()
+    formValue.value.start = formatISO(new Date())
+    
+    // Crear registro INICIAL en PocketBase
+    const record = await pb.collection('time_entries').create({
+      ...formValue.value,
+      end: null, // Sigue en curso
+      duration: 0
+    })
+    
+    currentEntryId.value = record.id
+    run.value = true
+    
+    if (isTabataMode.value) {
+      currentPhase.value = 'prepare'
+      remainingTime.value = 3
+    }
+    
+    resume()
+    message.info('Sesión iniciada y registrada')
   } catch (e) {
-    console.error(e)
-    message.error('Error al guardar')
+    message.error('Error al iniciar sesión en el servidor')
   } finally {
     formValue.value.processing = false
+  }
+}
+
+const stopSession = async () => {
+  formValue.value.processing = true
+  pause()
+  try {
+    formValue.value.end = formatISO(new Date())
+    
+    // Actualizar registro FINAL
+    if (currentEntryId.value) {
+      await updateEntryInDB()
+      message.success('Sesión finalizada correctamente')
+    }
+    resetForm()
+  } catch (e) {
+    message.error('Error al cerrar sesión')
+    // Si falla, permitimos que el usuario intente 'Stop' de nuevo
+    resume() 
+  } finally {
+    run.value = false
+    formValue.value.processing = false
+  }
+}
+
+const updateEntryInDB = async () => {
+  if (!currentEntryId.value) return
+  try {
+    await pb.collection('time_entries').update(currentEntryId.value, {
+      duration: formValue.value.duration,
+      end: formValue.value.end,
+      description: formValue.value.description
+    })
+  } catch (e) {
+    console.error("Error en auto-guardado", e)
   }
 }
 
 const resetForm = () => {
   formValue.value.duration = 0
   formValue.value.description = ''
+  currentEntryId.value = null
+  autoSaveCounter.value = 0
   remainingTime.value = 0
   currentPhase.value = 'work'
 }

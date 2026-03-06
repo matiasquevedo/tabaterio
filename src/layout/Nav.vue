@@ -8,6 +8,9 @@
 
 
 	      	<div class="flex gap-3 items-center">
+	      		<div>
+	      			<img src="../assets/logo.svg" width="48" alt="">
+	      		</div>
 	      	  
 	      		<div>
 	      			<RouterLink to="/">Home</RouterLink>
@@ -17,7 +20,7 @@
 	      		</div>
 
 
-
+	      		
 	      	</div>
 
 	      </div>
@@ -25,7 +28,7 @@
 	      <!-- Right side desktop -->
 	      <div class="flex items-center">
 	        <div class="hidden sm:flex sm:items-center sm:space-x-4">
-
+	        	<TodaySumTimes />
 	        </div>
 
 	        <!-- Navbar Hamburger mobile -->
@@ -45,6 +48,7 @@
 
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import TodaySumTimes from '@/components/TodaySumTimes.vue'
 </script>
 
 

@@ -15,7 +15,6 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
-      meta: { title: 'Inicio' }
     },
     {
       path: '/proyectos',
@@ -49,7 +48,7 @@ router.beforeEach((to, from, next) => {
   console.log(`valor en el router:${store.count}`)
 
   let appName = 'Tabaterio'
-  document.title = `${to.meta.title} | ${appName}`;
+  document.title = `${to.meta.title?to.meta.title+' |':''} ${appName}`;
   next();
 });
 

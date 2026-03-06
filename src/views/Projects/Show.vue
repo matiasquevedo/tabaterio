@@ -7,7 +7,7 @@
             <Color :color="project.color"/> {{project.name}} ({{project.expand?.tasks_via_project.length>0?project.expand?.tasks_via_project.length:0}} tareas)
         </h1>
 
-        {{pb.realtime.isConnected}}
+        Total de Horas: {{formattedTime(sumTime)}}
 
       </div>
     </template>
@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import AppLayout from '@/layout/AppLayout.vue'
 import Color from '@/components/ColorCircle.vue'
 import CreateTaskModal from '@/components/tasks/CreateTaskModal.vue'
@@ -65,12 +65,17 @@ import UpdateTaskModal from '@/components/tasks/UpdateTaskModal.vue'
 import DeleteProjectModal from '@/components/projects/DeleteProjectModal.vue'
 
 import pb from '@/lib/pocketbase';
+import formattedTime from '@/lib/time';
+import _ from 'lodash'
+
 
 const props = defineProps({ id: { type: String, required: true } });
 
 // Inicializamos como objeto, no como array
 const project = ref<any>({}); 
 const tasks = ref<any[]>([]);
+const entries = ref<any[]>([]);
+
 const loading = ref(false);
 
 const suscribeRealTimeTask = async () => {
@@ -90,15 +95,21 @@ const suscribeRealTimeTask = async () => {
   }, { filter: filterString });
 };
 
+
+const sumTime = computed(()=>{
+  return _.sumBy(entries.value, function(o) { return o.duration; });
+})
+
 const loadData = async () => {
   loading.value = true;
   try {
     const record = await pb.collection('projects').getOne(props.id, { 
-      expand: "tasks_via_project" 
+      expand: "tasks_via_project, time_entries_via_project" 
     });
     project.value = record;
     // Sincronizamos tasks con lo que viene del expand inicial
     tasks.value = record.expand?.tasks_via_project || [];
+    entries.value = record.expand?.time_entries_via_project || [];
   } catch (error) {
     console.error("Error cargando proyecto:", error);
   } finally {
