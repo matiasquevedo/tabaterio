@@ -2,6 +2,7 @@
 
   <div class="p-6">
 
+
     <div v-if="loading">
       cargando
     </div>
@@ -55,6 +56,7 @@ const loadData = async () => {
     const records = await pb.collection('time_entries').getFullList(
       {fields:'id,duration', sort: '-created', filter: dateFilter}
     );
+    console.log(records)
     entries.value = records;
   } catch (error) {
     console.error("Error en PocketBase:", error);
@@ -99,6 +101,7 @@ const formattedTime = (s) => {
 
 
 onMounted(async () => {
+  console.log('montdado')
   await loadData();
   suscribeRealTimeProject()
 });

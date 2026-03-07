@@ -7,11 +7,16 @@ import naive from 'naive-ui'
 import App from './App.vue'
 import router from './router'
 
+const pinia = createPinia()
 const app = createApp(App)
 
-app.use(createPinia())
+app.use(pinia)
 app.use(naive)
 app.use(router)
+
+
+
+
 
 // app.mount('#app')
 router.isReady().then(() => {

@@ -107,6 +107,11 @@ import { formatISO } from 'date-fns'
 import AddProjectButton from '@/components/time_entries/AddProjectButton.vue'
 import AddTagSelect from '@/components/time_entries/AddTagSelect.vue'
 import pb from '@/lib/pocketbase'
+import { useTimerStore } from '@/stores/timer'
+
+// --- STORE DE PINIA ---
+const store = useTimerStore()
+const { execute, setPhase } = store
 
 import StartSound from '@/assets/sounds/start.mp3'
 import EndSound from '@/assets/sounds/end.mp3'
@@ -115,14 +120,14 @@ import EndSound from '@/assets/sounds/end.mp3'
 const { play: playPrepSound } = useSound(StartSound)
 const { play: playWorkEnding } = useSound(EndSound)
 
-// --- ESTADO ---
+// --- ESTADO LOCAL ---
 const formRef = ref<FormInst | null>(null)
 const message = useMessage()
 const run = ref(false)
 const currentPhase = ref<'prepare' | 'work' | 'pause'>('work')
 const remainingTime = ref(0) 
-const currentEntryId = ref<string | null>(null) // ID del registro en PocketBase
-const autoSaveCounter = ref(0) // Para guardar cada 30 segundos
+const currentEntryId = ref<string | null>(null)
+const autoSaveCounter = ref(0)
 
 const formValue = ref({
   description: '',
@@ -163,19 +168,15 @@ const formatCountdown = (totalSeconds: number) => {
 // --- EL CORAZÓN DEL TIMER ---
 
 async function tick() {
-  // 1. Incrementar tiempo y auto-guardado
   if (!isTabataMode.value || currentPhase.value === 'work') {
     formValue.value.duration++
     autoSaveCounter.value++
-    
-    // Auto-guardado cada 30 segundos para evitar pérdida de datos
     if (autoSaveCounter.value >= 30) {
       updateEntryInDB()
       autoSaveCounter.value = 0
     }
   }
 
-  // 2. Lógica de Modos
   if (!isTabataMode.value) return
 
   if (currentPhase.value === 'prepare') {
@@ -183,6 +184,7 @@ async function tick() {
     remainingTime.value--
     if (remainingTime.value <= 0) {
       currentPhase.value = 'work'
+      setPhase('work') // Sincronizamos con Store
       remainingTime.value = formValue.value.work * 60
       message.success('¡A trabajar!')
     }
@@ -192,13 +194,15 @@ async function tick() {
        currentPhase.value === 'work' ? playWorkEnding() : playPrepSound()
     }
   } else {
-    // Cambio de fase
+    // Cambio de fase automático
     if (currentPhase.value === 'work') {
       currentPhase.value = 'pause'
+      setPhase('pause') // Sincronizamos con Store
       remainingTime.value = formValue.value.pause * 60
       message.warning('Descanso...')
     } else {
       currentPhase.value = 'work'
+      setPhase('work') // Sincronizamos con Store
       remainingTime.value = formValue.value.work * 60
       message.success('¡A trabajar!')
     }
@@ -207,7 +211,7 @@ async function tick() {
 
 const { resume, pause } = useTimeoutPoll(tick, 1000, { immediate: false })
 
-// --- ACCIONES DE POCKETBASE ---
+// --- ACCIONES ---
 
 const handleToggle = () => {
   formRef.value?.validate(async (errors) => {
@@ -218,6 +222,9 @@ const handleToggle = () => {
     } else {
       await stopSession()
     }
+    
+    // Sincronizamos el booleano 'run' del store
+    execute() 
   })
 }
 
@@ -225,11 +232,9 @@ const startSession = async () => {
   formValue.value.processing = true
   try {
     formValue.value.start = formatISO(new Date())
-    
-    // Crear registro INICIAL en PocketBase
     const record = await pb.collection('time_entries').create({
       ...formValue.value,
-      end: null, // Sigue en curso
+      end: null,
       duration: 0
     })
     
@@ -238,13 +243,17 @@ const startSession = async () => {
     
     if (isTabataMode.value) {
       currentPhase.value = 'prepare'
+      setPhase('prepare') // Sincronizamos con Store
       remainingTime.value = 3
+    } else {
+      currentPhase.value = 'work'
+      setPhase('work') // Sincronizamos con Store
     }
     
     resume()
-    message.info('Sesión iniciada y registrada')
+    message.info('Sesión iniciada')
   } catch (e) {
-    message.error('Error al iniciar sesión en el servidor')
+    message.error('Error al conectar con el servidor')
   } finally {
     formValue.value.processing = false
   }
@@ -255,16 +264,13 @@ const stopSession = async () => {
   pause()
   try {
     formValue.value.end = formatISO(new Date())
-    
-    // Actualizar registro FINAL
     if (currentEntryId.value) {
       await updateEntryInDB()
-      message.success('Sesión finalizada correctamente')
     }
     resetForm()
+    setPhase('stop') // Importante: Volver a estado stop en el store
   } catch (e) {
-    message.error('Error al cerrar sesión')
-    // Si falla, permitimos que el usuario intente 'Stop' de nuevo
+    message.error('Error al guardar sesión')
     resume() 
   } finally {
     run.value = false
@@ -281,7 +287,7 @@ const updateEntryInDB = async () => {
       description: formValue.value.description
     })
   } catch (e) {
-    console.error("Error en auto-guardado", e)
+    console.error("Error auto-save", e)
   }
 }
 
@@ -296,9 +302,3 @@ const resetForm = () => {
 
 onUnmounted(() => pause())
 </script>
-
-<style scoped>
-.transition-all {
-  transition: all 0.3s ease;
-}
-</style>

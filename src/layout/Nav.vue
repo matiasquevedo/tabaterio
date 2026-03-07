@@ -29,6 +29,10 @@
 	      <div class="flex items-center">
 	        <div class="hidden sm:flex sm:items-center sm:space-x-4">
 	        	<TodaySumTimes />
+
+	        	<div>
+	        		{{updateTitle()}}
+	        	</div>
 	        </div>
 
 	        <!-- Navbar Hamburger mobile -->
@@ -47,8 +51,43 @@
 </template>
 
 <script setup lang="ts">
+import { watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import TodaySumTimes from '@/components/TodaySumTimes.vue'
+import { storeToRefs } from 'pinia'
+import { useTimerStore } from '@/stores/timer'
+
+
+const store = useTimerStore()
+// `name` y `doubleCount` son refs reactivas
+// Esto también extraerá refs para las propiedades añadidas por plugins
+// pero se saltará cualquier acción o propiedad no reactiva (sin ref/reactive)
+const { run, phase } = storeToRefs(store)
+
+
+
+const updateTitle = () => {  
+  // Mapeo amigable para el usuario
+  const phaseNames = {
+    prepare: '🟡 PREPARANDO',
+    work: '🔴 TRABAJANDO',
+    pause: '💚 DESCANSO',
+    stop: '🫵'
+  }
+
+  // Corregido: Usar el mapeo para obtener el nombre bonito
+  const currentPhaseName = phaseNames[store.phase] || ''
+  
+  return `${currentPhaseName}`
+}
+
+watch(
+  [() => store.phase], 
+  () => {
+    updateTitle()
+  },
+  { immediate: true }
+)
 </script>
 
 
