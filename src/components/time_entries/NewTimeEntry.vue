@@ -88,8 +88,11 @@
     </n-form>
 
     <div class="flex justify-between items-center mt-4 px-2 text-[10px] text-zinc-600">
-      <div class="flex gap-4">
+      <div class="flex gap-4 items-center">
         <span>Modo: {{ isTabataMode ? 'Tabata' : 'Infinito' }}</span>
+        <span :class="isActive ? 'text-green-500' : 'text-zinc-500'">
+          🛡️ Mantener encendido: {{ isActive ? 'ACTIVO' : 'Inactivo' }}
+        </span>
         <span v-if="currentEntryId" class="text-blue-500">Sincronizado: {{ currentEntryId }}</span>
       </div>
       <span v-if="run">Estado: {{ currentPhase }} | Restante: {{ remainingTime }}s</span>
@@ -101,7 +104,7 @@
 import { ref, computed, onUnmounted } from 'vue'
 import type { FormInst } from 'naive-ui'
 import { useMessage } from 'naive-ui'
-import { useTimeoutPoll } from '@vueuse/core'
+import { useTimeoutPoll, useWakeLock, onKeyStroke } from '@vueuse/core'
 import { useSound } from '@vueuse/sound'
 import { formatISO } from 'date-fns'
 import AddProjectButton from '@/components/time_entries/AddProjectButton.vue'
@@ -115,6 +118,19 @@ const { execute, setPhase } = store
 
 import StartSound from '@/assets/sounds/start.mp3'
 import EndSound from '@/assets/sounds/end.mp3'
+
+
+import {  } from '@vueuse/core'
+
+onKeyStroke('s', async (e) => {
+  e.preventDefault()
+  console.log('apre´to sss')
+  await stopSession()
+
+})
+
+// --- WAKE LOCK (Control de suspensión) ---
+const { isSupported, isActive, request, release } = useWakeLock()
 
 // --- SONIDOS ---
 const { play: playPrepSound } = useSound(StartSound)
@@ -184,7 +200,7 @@ async function tick() {
     remainingTime.value--
     if (remainingTime.value <= 0) {
       currentPhase.value = 'work'
-      setPhase('work') // Sincronizamos con Store
+      setPhase('work')
       remainingTime.value = formValue.value.work * 60
       message.success('¡A trabajar!')
     }
@@ -194,15 +210,14 @@ async function tick() {
        currentPhase.value === 'work' ? playWorkEnding() : playPrepSound()
     }
   } else {
-    // Cambio de fase automático
     if (currentPhase.value === 'work') {
       currentPhase.value = 'pause'
-      setPhase('pause') // Sincronizamos con Store
+      setPhase('pause')
       remainingTime.value = formValue.value.pause * 60
       message.warning('Descanso...')
     } else {
       currentPhase.value = 'work'
-      setPhase('work') // Sincronizamos con Store
+      setPhase('work')
       remainingTime.value = formValue.value.work * 60
       message.success('¡A trabajar!')
     }
@@ -223,7 +238,6 @@ const handleToggle = () => {
       await stopSession()
     }
     
-    // Sincronizamos el booleano 'run' del store
     execute() 
   })
 }
@@ -231,6 +245,11 @@ const handleToggle = () => {
 const startSession = async () => {
   formValue.value.processing = true
   try {
+    // 1. Activar Wake Lock si está soportado
+    if (isSupported.value) {
+      await request('screen')
+    }
+
     formValue.value.start = formatISO(new Date())
     const record = await pb.collection('time_entries').create({
       ...formValue.value,
@@ -243,17 +262,18 @@ const startSession = async () => {
     
     if (isTabataMode.value) {
       currentPhase.value = 'prepare'
-      setPhase('prepare') // Sincronizamos con Store
+      setPhase('prepare')
       remainingTime.value = 3
     } else {
       currentPhase.value = 'work'
-      setPhase('work') // Sincronizamos con Store
+      setPhase('work')
     }
     
     resume()
     message.info('Sesión iniciada')
   } catch (e) {
-    message.error('Error al conectar con el servidor')
+    message.error('Error al iniciar sesión')
+    console.error(e)
   } finally {
     formValue.value.processing = false
   }
@@ -263,12 +283,17 @@ const stopSession = async () => {
   formValue.value.processing = true
   pause()
   try {
+    // 2. Liberar Wake Lock para permitir que la pantalla se apague normalmente
+    if (isSupported.value && isActive.value) {
+      await release()
+    }
+
     formValue.value.end = formatISO(new Date())
     if (currentEntryId.value) {
       await updateEntryInDB()
     }
     resetForm()
-    setPhase('stop') // Importante: Volver a estado stop en el store
+    setPhase('stop')
   } catch (e) {
     message.error('Error al guardar sesión')
     resume() 
@@ -300,5 +325,15 @@ const resetForm = () => {
   currentPhase.value = 'work'
 }
 
-onUnmounted(() => pause())
+onUnmounted(() => {
+  pause()
+  // Asegurarse de liberar el lock si se destruye el componente
+  if (isActive.value) release()
+})
 </script>
+
+<style scoped>
+.transition-all {
+  transition: all 0.3s ease;
+}
+</style>
