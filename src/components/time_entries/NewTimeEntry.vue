@@ -104,32 +104,37 @@
 import { ref, computed, onUnmounted } from 'vue'
 import type { FormInst } from 'naive-ui'
 import { useMessage } from 'naive-ui'
-import { useTimeoutPoll, useWakeLock, onKeyStroke } from '@vueuse/core'
+import { useTimeoutPoll, useWakeLock, onKeyStroke, useFavicon } from '@vueuse/core'
 import { useSound } from '@vueuse/sound'
-import { formatISO } from 'date-fns'
 import AddProjectButton from '@/components/time_entries/AddProjectButton.vue'
 import AddTagSelect from '@/components/time_entries/AddTagSelect.vue'
 import pb from '@/lib/pocketbase'
 import { useTimerStore } from '@/stores/timer'
 
+// --- ASSETS ---
+import StartSound from '@/assets/sounds/start.mp3'
+import EndSound from '@/assets/sounds/end.mp3'
+import IcoPause from '@/assets/icopause.png'
+import IcoWork from '@/assets/icowork.png'
+
 // --- STORE DE PINIA ---
 const store = useTimerStore()
 const { execute, setPhase } = store
 
-import StartSound from '@/assets/sounds/start.mp3'
-import EndSound from '@/assets/sounds/end.mp3'
-
-
-import {  } from '@vueuse/core'
-
+// --- HOTKEYS CORREGIDO ---
 onKeyStroke('s', async (e) => {
-  e.preventDefault()
-  console.log('apre´to sss')
-  await stopSession()
+  // Verificamos si el foco está en un elemento de texto
+  const target = e.target as HTMLElement;
+  const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
 
+  if (run.value && !isInput) {
+    e.preventDefault()
+    await stopSession()
+    execute()
+  }
 })
 
-// --- WAKE LOCK (Control de suspensión) ---
+// --- WAKE LOCK ---
 const { isSupported, isActive, request, release } = useWakeLock()
 
 // --- SONIDOS ---
@@ -166,6 +171,14 @@ const rules = { description: { required: false } }
 const isTabataMode = computed(() => {
   return (formValue.value.work ?? 0) > 0 && (formValue.value.pause ?? 0) > 0
 })
+
+// LÓGICA DEL FAVICON
+const favicon = computed(() => {
+  if (!run.value) return '/favicon.ico' 
+  if (currentPhase.value === 'pause') return IcoPause
+  return IcoWork 
+})
+useFavicon(favicon)
 
 const formattedTotalTime = computed(() => {
   const s = formValue.value.duration
@@ -245,12 +258,11 @@ const handleToggle = () => {
 const startSession = async () => {
   formValue.value.processing = true
   try {
-    // 1. Activar Wake Lock si está soportado
-    if (isSupported.value) {
-      await request('screen')
-    }
+    if (isSupported.value) await request('screen')
 
-    formValue.value.start = formatISO(new Date())
+    // USAMOS .toISOString() para que PocketBase reciba UTC real
+    formValue.value.start = new Date().toISOString()
+    
     const record = await pb.collection('time_entries').create({
       ...formValue.value,
       end: null,
@@ -273,7 +285,6 @@ const startSession = async () => {
     message.info('Sesión iniciada')
   } catch (e) {
     message.error('Error al iniciar sesión')
-    console.error(e)
   } finally {
     formValue.value.processing = false
   }
@@ -283,12 +294,9 @@ const stopSession = async () => {
   formValue.value.processing = true
   pause()
   try {
-    // 2. Liberar Wake Lock para permitir que la pantalla se apague normalmente
-    if (isSupported.value && isActive.value) {
-      await release()
-    }
+    if (isSupported.value && isActive.value) await release()
 
-    formValue.value.end = formatISO(new Date())
+    formValue.value.end = new Date().toISOString()
     if (currentEntryId.value) {
       await updateEntryInDB()
     }
@@ -327,7 +335,6 @@ const resetForm = () => {
 
 onUnmounted(() => {
   pause()
-  // Asegurarse de liberar el lock si se destruye el componente
   if (isActive.value) release()
 })
 </script>

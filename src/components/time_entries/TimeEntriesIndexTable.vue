@@ -1,118 +1,183 @@
 <template>
-
   <div class="p-6">
-
-    <div v-if="loading">
-      cargando
+    <div v-if="loading" class="text-zinc-500 animate-pulse">
+      Cargando historial...
     </div>
     <div v-else>
+      <div class="flex justify-between mb-4 items-center">
+        <h2 class="text-xl font-bold">Entradas</h2>
+        <NewTimeEntryManualModal />
+      </div>
       
-      <div v-if="entries.length">
-        <table class="min-w-full divide-y text-white dark:bg-zinc-900">
-          <thead class="bg-gray-700">
+      <div v-if="groupedEntries.length" class="overflow-x-auto">
+        <table class="min-w-full divide-y text-white bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
+          <thead class="bg-zinc-800">
             <tr>
-              <th class="px-4 py-3 text-left text-sm font-semibold">Descripción</th>
-              <th class="px-4 py-3 text-left text-sm font-semibold">Duración</th>
-              <th class="px-4 py-3 text-left text-sm font-semibold">Proyecto</th>
-              <th class="px-4 py-3 text-left text-sm font-semibold"></th>
-
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-400">Hora / Fecha</th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-400">Descripción</th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-400">Duración Total</th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-400">Proyecto</th>
+              <th class="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider text-zinc-400">Acciones</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-700">
-            <tr v-for="entry in entries" :key="entry.id" class="hover:bg-zinc-800 transition-colors">
-              <td class="px-4 py-3 text-sm">
-                  {{ entry.description }}
-
-                  <span v-if="entry.expand && entry.expand.tag">
-                    <n-tag round :bordered="false" type="success">
-                      {{entry.expand.tag?entry.expand.tag.name:''}}
-                      <template #icon>
-                        <n-icon :component="Tag" />
-                      </template>
-                    </n-tag>
-                  </span>
+          <tbody class="divide-y divide-zinc-800">
+            <tr v-for="(group, index) in groupedEntries" :key="index" class="hover:bg-zinc-800/50 transition-colors">
+              <td class="px-4 py-3 text-sm font-mono text-zinc-500">
+                <div class="text-xs">{{ formatDate(group.latestStart) }}</div>
+                <div class="text-zinc-300">{{ formatRange(group.earliestStart, group.latestEnd) }}</div>
               </td>
-              <td class="px-4 py-3 text-sm">{{ formattedTime(entry.duration) }}</td>
-              <td class="px-4 py-3 text-sm">
 
-                <p v-if="entry.expand && entry.expand.project" :style="{color:entry.expand.project.color}">
-                  <router-link :to="{ name: 'proyectos.show', params: { id: entry.expand.project.id } }">
-                  {{entry.expand.project?entry.expand.project.name:''}}{{entry.expand.task?`:${entry.expand.task.name}`:''}} 
+              <td class="px-4 py-3 text-sm">
+                <div class="flex items-center gap-2">
+                  <span class="font-medium">{{ group.description || '(Sin descripción)' }}</span>
+                  <n-badge v-if="group.count > 1" :value="group.count" type="info" :max="99" />
+                </div>
+
+                <div v-if="group.tag" class="mt-1">
+                  <n-tag round :bordered="false" type="success" size="small">
+                    {{ group.tag.name }}
+                    <template #icon><n-icon :component="Tag" /></template>
+                  </n-tag>
+                </div>
+              </td>
+
+              <td class="px-4 py-3 text-sm font-mono font-bold text-green-500">
+                {{ formattedTime(group.totalDuration) }}
+              </td>
+
+              <td class="px-4 py-3 text-sm">
+                <p v-if="group.project" :style="{ color: group.project.color }">
+                  <router-link :to="{ name: 'proyectos.show', params: { id: group.project.id } }" class="hover:underline">
+                    {{ group.project.name }}{{ group.task ? ` : ${group.task.name}` : '' }}
                   </router-link>
                 </p>
-
-              </td>
-              <td class="px-4 py-3 text-sm">
-                <DeleteTimeEntryModal :id="entry.id" />
+                <span v-else class="text-zinc-600 italic text-xs">Sin proyecto</span>
               </td>
 
-
-              
+              <td class="px-4 py-3 text-right">
+                <DeleteTimeEntryModal :id="group.latestId" />
+              </td>
             </tr>
           </tbody>
         </table>
-
       </div>
+
       <div v-else>
-        <n-empty description="You can't find anything">
+        <n-empty description="No hay entradas registradas">
           <template #extra>
-            <n-button size="small">
-              Find Something New
-            </n-button>
+            <n-button size="small" @click="loadData">Actualizar</n-button>
           </template>
         </n-empty>
       </div>
-
-
-
     </div>
-
-
-
   </div>
-
-
 </template>
 
-
-
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { RouterLink } from 'vue-router'
-import DeleteTimeEntryModal from '@/components/time_entries/DeleteTimeEntryModal.vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue';
+import { format, isValid } from 'date-fns';
+import { es } from 'date-fns/locale';
+import DeleteTimeEntryModal from '@/components/time_entries/DeleteTimeEntryModal.vue';
+import NewTimeEntryManualModal from '@/components/time_entries/NewTimeEntryManualModal.vue';
 import pb from '@/lib/pocketbase';
-import { Tag } from '@vicons/tabler'
+import { Tag } from '@vicons/tabler';
 
 const entries = ref<any[]>([]);
 const loading = ref(false);
 
 const loadData = async () => {
-  // Evitamos llamadas duplicadas si ya está cargando
   if (loading.value) return;
-
   loading.value = true;
   try {
-    // Usamos el nombre de la colección correcto
-    const records = await pb.collection('time_entries').getFullList<ProjectRecord>(
-      {sort: '-created', expand: "project, task, tag"}
-    );
+    const records = await pb.collection('time_entries').getFullList({
+      sort: '-start',
+      expand: "project, task, tag"
+    });
     entries.value = records;
   } catch (error) {
-    console.error("Error en PocketBase:", error);
+    console.error("Error PB:", error);
   } finally {
-    loading.value = false; // El finally asegura que siempre se apague el loading
+    loading.value = false;
   }
-}
+};
 
+// --- LÓGICA DE AGRUPACIÓN CONSECUTIVA ---
+const groupedEntries = computed(() => {
+  const groups: any[] = [];
+  if (entries.value.length === 0) return groups;
 
+  entries.value.forEach((entry) => {
+    const lastGroup = groups[groups.length - 1];
+    
+    // Criterio: Misma descripción Y mismo proyecto
+    const canGroup = lastGroup && 
+                     lastGroup.description === entry.description &&
+                     lastGroup.project?.id === entry.expand?.project?.id;
 
-const suscribeRealTimeProject = async () => {
+    if (canGroup) {
+      lastGroup.count += 1;
+      lastGroup.totalDuration += (entry.duration || 0);
+      
+      // Solo actualizamos si las fechas son válidas
+      if (entry.start && new Date(entry.start) < new Date(lastGroup.earliestStart)) {
+        lastGroup.earliestStart = entry.start;
+      }
+      // El fin puede ser nulo si la tarea está activa
+      if (entry.end && (!lastGroup.latestEnd || new Date(entry.end) > new Date(lastGroup.latestEnd))) {
+        lastGroup.latestEnd = entry.end;
+      }
+    } else {
+      groups.push({
+        latestId: entry.id,
+        description: entry.description,
+        totalDuration: entry.duration || 0,
+        count: 1,
+        earliestStart: entry.start,
+        latestStart: entry.start,
+        latestEnd: entry.end || null, // Manejamos nulo para tareas activas
+        project: entry.expand?.project,
+        task: entry.expand?.task,
+        tag: entry.expand?.tag
+      });
+    }
+  });
 
-  console.log('conectando')
+  return groups;
+});
+
+// --- FORMATEADORES CON "GUARDIAS" ---
+const formattedTime = (s: number) => {
+  if (!s || s < 0) return '00:00:00';
+  const hours = Math.floor(s / 3600).toString().padStart(2, '0');
+  const minutes = Math.floor((s % 3600) / 60).toString().padStart(2, '0');
+  const seconds = (s % 60).toString().padStart(2, '0');
+  return `${hours}:${minutes}:${seconds}`;
+};
+
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return 'Fecha desconocida';
+  const d = new Date(dateStr);
+  if (!isValid(d)) return 'Fecha inválida';
+  return format(d, "eee, d 'de' MMM", { locale: es });
+};
+
+const formatRange = (startStr: string, endStr: string) => {
+  const start = new Date(startStr);
+  const end = endStr ? new Date(endStr) : null;
+
+  if (!isValid(start)) return '--:--';
+  
+  const sFormated = format(start, 'HH:mm');
+  // Si no hay fecha de fin (tarea activa), mostramos "Ahora"
+  const eFormated = (end && isValid(end)) ? format(end, 'HH:mm') : '...';
+  
+  return `${sFormated} — ${eFormated}`;
+};
+
+// --- REALTIME ---
+const subscribe = async () => {
   await pb.collection('time_entries').subscribe('*', (e) => {
-    console.log('Realtime:', e.action, e.record);
-    console.log('conectadito')
-
+    // Recargamos datos para asegurar consistencia en el agrupamiento
     if (e.action === 'create') {
       entries.value.unshift(e.record);
     } else if (e.action === 'update') {
@@ -120,23 +185,16 @@ const suscribeRealTimeProject = async () => {
     } else if (e.action === 'delete') {
       entries.value = entries.value.filter(item => item.id !== e.record.id);
     }
-  }, {sort: '-created', expand: "project, task, tag"  });
-
+    
+  },{sort: '-start', expand: "project, task, tag"  });
 };
-
-
-const formattedTime = (s) => {
-  const hours = Math.floor(s / 3600).toString().padStart(2, '0')
-  const minutes = Math.floor((s % 3600) / 60).toString().padStart(2, '0')
-  const seconds = (s % 60).toString().padStart(2, '0')
-  return `${hours}:${minutes}:${seconds}`
-}
-
-
-
 
 onMounted(async () => {
   await loadData();
-  suscribeRealTimeProject()
+  subscribe();
+});
+
+onUnmounted(() => {
+  pb.collection('time_entries').unsubscribe('*');
 });
 </script>

@@ -54,9 +54,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import PocketBase from 'pocketbase';
-
-const pb = new PocketBase('/'); 
+import pb from '@/lib/pocketbase'
 
 const props = defineProps({
     project: String,
@@ -89,9 +87,9 @@ const submit = async () => {
         
         // Limpiamos el formulario después de crear (excepto el proyecto)
         createForm.value.name = '';
-        createForm.value.rate = 0;
+        createForm.value.task_rate = 0;
         
-        showModal.value = false; // Cerramos el modal
+        openModal()
     } catch (error) {
         console.error("Error en PocketBase:", error);
         // Aquí podrías mapear los errores que devuelve PocketBase a tu ref 'errors'
