@@ -1,12 +1,14 @@
 <template>
-  <div>
+  <div class="min-h-screen flex flex-col bg-slate-950 font-sans tracking-tight selection:bg-cyan-500/30 selection:text-cyan-200">
+    
     <Nav />
 
-    <div>
+    <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       <n-message-provider>
         <RouterView />
       </n-message-provider>
-    </div>
+    </main>
+    
   </div>
 </template>
 
@@ -20,26 +22,23 @@ import { useTimerStore } from '@/stores/timer'
 const route = useRoute()
 const store = useTimerStore()
 
-// Esta función centraliza la lógica del título
 const updateTitle = () => {
   const appName = 'Tabaterio'
   const routeTitle = route.meta.title ? `${route.meta.title} | ` : ''
   
-  // Mapeo amigable para el usuario
+  // Mapeo amigable, cercano y consistente con el diseño
   const phaseNames = {
-    prepare: '🟡 PREPARANDO |',
-    work: '🔴 TRABAJANDO |',
-    pause: '💚 DESCANSO |',
+    prepare: '✨ Preparando |',
+    work: '🔥 Enfocado |',
+    pause: '🌊 Descanso |',
     stop: ''
   }
 
-  // Corregido: Usar el mapeo para obtener el nombre bonito
   const currentPhaseName = phaseNames[store.phase] || ''
   
   document.title = `${currentPhaseName} ${routeTitle}${appName}`
 }
 
-// SOLUCIÓN: Añadimos () => store.phase a la lista de vigilancia
 watch(
   [() => store.phase, () => route.path], 
   () => {

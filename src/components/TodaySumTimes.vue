@@ -1,18 +1,29 @@
 <template>
-  <div class="p-6 flex gap-2 items-center">
-    <div class="font-mono text-zinc-500 text-base">
-      {{ formatDate(new Date()) }}: 
+  <div class="flex items-center gap-3 py-2">
+    
+    <div class="text-xs font-medium tracking-wide text-slate-400 capitalize">
+      {{ formatDate(new Date()) }}:
     </div>
 
-    <div v-if="loading" class="text-zinc-500 animate-pulse">
-      Cargando tiempo de hoy...
+    <div v-if="loading" class="flex items-center gap-1.5 text-slate-500 animate-pulse text-sm">
+      <span class="h-1.5 w-1.5 rounded-full bg-slate-500"></span>
+      <span>Calculando...</span>
     </div>
-    <div v-else class="text-xl font-bold tracking-tight">
-      <div v-if="entries.length" class="flex items-center gap-2">
-        <span class="font-mono text-green-500">{{ formattedTime(sumTime) }}</span>
+
+    <div v-else class="flex items-center">
+      <div v-if="entries.length" class="flex items-center gap-1.5">
+        <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="font-mono text-base font-semibold text-emerald-400 tracking-tight">
+          {{ formattedTime(sumTime) }}
+        </span>
       </div>
-      <div v-else class="text-zinc-500 flex items-center gap-2">
-        <span class="font-mono">{{ formattedTime(0) }} 🖕</span> 
+
+      <div v-else class="flex items-center gap-1.5 text-slate-500">
+        <span class="h-1.5 w-1.5 rounded-full bg-slate-600"></span>
+        <span class="font-mono text-sm tracking-tight">
+          {{ formattedTime(0) }}
+        </span>
+        <span class="text-xs tracking-wide">¡A empezar! ✨</span>
       </div>
     </div>
 
@@ -21,7 +32,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, onUnmounted } from 'vue';
-import { startOfDay, endOfDay, format, isValid } from 'date-fns';
+import { startOfDay, endOfDay, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import _ from 'lodash';
 import pb from '@/lib/pocketbase';
@@ -29,19 +40,10 @@ import pb from '@/lib/pocketbase';
 const entries = ref<any[]>([]);
 const loading = ref(false);
 
-/**
- * CONSTRUCCIÓN DEL FILTRO SEGÚN DOCUMENTACIÓN
- * PocketBase compara fechas como strings: 'YYYY-MM-DD HH:mm:ss.SSSZ'
- * Usamos format() para forzar ese formato exacto independientemente de la zona horaria.
- */
 const todayStart = format(startOfDay(new Date()), "yyyy-MM-dd HH:mm:ss.SSS'Z'");
 const todayEnd = format(endOfDay(new Date()), "yyyy-MM-dd HH:mm:ss.SSS'Z'");
 
-// Aplicamos el filtro sobre el campo 'created' como indica la documentación
 const dateFilter = `non_billable = false && created >= "${todayStart}" && created <= "${todayEnd}"`;
-
-// const dateFilter = `non_billable = false && created >= @todayStart && created <= @todayEnd`;
-
 
 const loadData = async () => {
   if (loading.value) return;
@@ -49,7 +51,7 @@ const loadData = async () => {
   
   try {
     const records = await pb.collection('time_entries').getFullList({
-      fields: 'id,duration,created, non_billable', 
+      fields: 'id,duration,created,non_billable', 
       filter: dateFilter,
       sort: '-created'
     });
@@ -67,7 +69,6 @@ const sumTime = computed(() => {
 
 const subscribeRealTime = async () => {
   await pb.collection('time_entries').subscribe('*', (e) => {
-    // Validación de string simple para el tiempo real
     const isToday = e.record.created >= todayStart && e.record.created <= todayEnd;
 
     if (!isToday && e.action !== 'delete') return;

@@ -1,27 +1,30 @@
 <template>
-  <div :style="circleStyle"></div>
+  <div 
+    class="inline-block flex-shrink-0 rounded-full border border-white/10 shadow-sm"
+    :style="{ backgroundColor: color }"
+    :class="sizeClasses"
+  />
 </template>
 
-<script setup>
-import { computed } from 'vue';
+<script setup lang="ts">
+import { computed } from 'vue'
 
 const props = defineProps({
   color: {
     type: String,
     required: true,
   },
-});
+  size: {
+    type: String,
+    default: 'md' // 'sm', 'md', 'lg'
+  }
+})
 
-const circleStyle = computed(() => ({
-  width: '15px',
-  height: '15px',
-  borderRadius: '50%',
-  backgroundColor: props.color,
-}));
+const sizeClasses = computed(() => {
+  return {
+    'sm': 'w-3 h-3',
+    'md': 'w-4 h-4',
+    'lg': 'w-5 h-5'
+  }[props.size] || 'w-4 h-4'
+})
 </script>
-
-<style scoped>
-div {
-  display: inline-block;
-}
-</style>

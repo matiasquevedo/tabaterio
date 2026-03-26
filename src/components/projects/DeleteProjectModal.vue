@@ -1,92 +1,100 @@
 <template>
-	<n-button type="error" block @click="openModal">
+  <n-button 
+    type="error" 
+    secondary
+    class="rounded-xl font-medium tracking-wide shadow-sm hover:shadow-md transition-all duration-300"
+    @click="openModal"
+  >
+    <template #icon>
+      <n-icon>
+        <Trash />
+      </n-icon>
+    </template>
+    Eliminar Proyecto
+  </n-button>
 
-		<template #icon>
-		  <n-icon>
-		    <Trash />
-		  </n-icon>
-		</template>
+  <n-modal 
+    v-model:show="showModal" 
+    close-on-esc
+    preset="card"
+    title="⚠️ ¿Eliminar este proyecto?"
+    style="width: 500px" 
+    class="rounded-2xl bg-slate-900 border border-slate-800 shadow-xl"
+    size="huge"
+    role="dialog"
+    aria-modal="true"
+  >   
+    <div class="py-2 flex flex-col gap-2">
+      <p class="text-base text-slate-100">
+        ¿Estás completamente seguro de que querés eliminar el proyecto <span class="font-bold text-white">"{{ name }}"</span>?
+      </p>
+      <p class="text-sm text-slate-400">
+        Esta acción es irreversible. Se borrarán todas las tareas asociadas y los tiempos acumulados.
+      </p>
+    </div>
 
-		Eliminar Proyecto {{name}}
-		
-	</n-button>
-	<n-modal 
-		v-model:show="showModal" 
-		close-on-esc
-		close-on-es
-		preset="card"
-		title="Eliminar Tarea"
-		style="width: 700px"
-		size="huge"
-		role="dialog"
-		aria-modal="true"
-	>	
-			<div>
-				Eliminar el proyecto <b>{{name}}</b>
-			</div>
+    <template #footer>
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <n-button 
+          secondary 
+          class="rounded-lg" 
+          @click="showModal = false"
+          :disabled="isProcessing"
+        >
+          Cancelar
+        </n-button>
 
-			
-
-			<template #footer>
-				<div>
-					<n-button type="error" block :loading="createForm.processing" :disabled="createForm.processing" @click="submit" attr-type="submit">Eliminar</n-button>
-
-
-				</div>
-			</template>
-	</n-modal>
+        <n-button 
+          type="error" 
+          class="rounded-lg px-6 font-semibold"
+          :loading="isProcessing" 
+          :disabled="isProcessing" 
+          @click="submit" 
+          attr-type="submit"
+        >
+          Eliminar Proyecto
+        </n-button>
+      </div>
+    </template>
+  </n-modal>
 </template>
 
-<script setup>
-import { ref, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { Trash } from '@vicons/tabler'
-import pb from '@/lib/pocketbase';
-
-
-
-const router = useRouter()
+import pb from '@/lib/pocketbase'
 
 const props = defineProps({
-    id: String,
-    name: String,
-    project: String,
+  id: {
+    type: String,
+    required: true
+  },
+  name: {
+    type: String,
+    required: true
+  }
 })
 
+const router = useRouter()
 const showModal = ref(false)
-const errors = ref({})
-
-// Inicializamos el ref. 
-// Nota: Si el prop 'project' ya viene definido al cargar, esto funcionará.
-const createForm = ref({
-    id: props.id,
-})
+const isProcessing = ref(false)
 
 const openModal = () => {
-    showModal.value = !showModal.value
+  showModal.value = !showModal.value
 }
 
 const submit = async () => {
-    createForm.value.processing = true; // Feedback visual de carga
-    errors.value = {}; // Limpiamos errores previos
+  isProcessing.value = true
 
-    try {
-        // IMPORTANTE: pasamos createForm.value
-        await pb.collection('projects').delete(props.id);
-        
-        // Limpiamos el formulario después de crear (excepto el proyecto)
-        createForm.value.name = '';
-        createForm.value.rate = 0;
-        
-        showModal.value = false; // Cerramos el modal
-
-        router.push({name: 'proyectos'})
-    } catch (error) {
-        console.error("Error en PocketBase:", error);
-        // Aquí podrías mapear los errores que devuelve PocketBase a tu ref 'errors'
-        errors.value = error.data?.data || {}; 
-    } finally {
-        createForm.value.processing = false;
-    }
+  try {
+    await pb.collection('projects').delete(props.id)
+    showModal.value = false 
+    router.push({ name: 'proyectos' })
+  } catch (error) {
+    console.error("Error en PocketBase al eliminar proyecto:", error)
+  } finally {
+    isProcessing.value = false
+  }
 }
 </script>

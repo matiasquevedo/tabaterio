@@ -1,197 +1,209 @@
 <template>
-	<n-button type="primary" text @click="openModal">Nuevo Proyecto</n-button>
-	<n-modal 
-		v-model:show="showModal" 
-		close-on-esc
-		close-on-es
-		preset="card"
-		title="Nuevo Proyecto"
-		style="width: 700px"
-		size="huge"
-		role="dialog"
-		aria-modal="true"
-	>			
-			<form @submit.prevent="submit">
+  <n-button 
+    type="primary" 
+    class="rounded-xl font-medium tracking-wide shadow-sm hover:shadow-md transition-all duration-300"
+    @click="openModal"
+  >
+    <template #icon>
+      <span class="text-lg">+</span>
+    </template>
+    Nuevo Proyecto
+  </n-button>
 
-				<n-form-item label="Nombre" show-require-mark
-				:feedback="errors.name?errors.name:''"
-				>
-				  <n-input
-				  	v-model:value="createForm.name"
-				  	:status="errors.name?'error':''"
-				  	placeholder="Nombre"
-				  /> 
-				</n-form-item>
+  <n-modal 
+    v-model:show="showModal" 
+    close-on-esc
+    preset="card"
+    title="🚀 Crear Nuevo Proyecto"
+    style="width: 600px" 
+    class="rounded-2xl bg-slate-900 border border-slate-800 shadow-xl"
+    size="huge"
+    role="dialog"
+    aria-modal="true"
+  >   
+    <form @submit.prevent="submit" class="space-y-2">
 
+      <n-form-item 
+        label="Nombre del proyecto" 
+        :feedback="errors.name"
+        :validation-status="errors.name ? 'error' : undefined"
+      >
+        <n-input
+          v-model:value="createForm.name"
+          placeholder="Ej: Rediseño de Plataforma"
+          class="rounded-lg"
+          clearable
+        /> 
+      </n-form-item>
 
+      <div class="grid grid-cols-4 items-end gap-4">
+        <div class="col-span-3">
+          <n-form-item 
+            label="Tarifa por hora" 
+            :feedback="errors.rate"
+            :validation-status="errors.rate ? 'error' : undefined"
+          >
+            <n-input-number 
+              v-model:value="createForm.rate"
+              :min="0"
+              placeholder="0.00"
+              class="w-full rounded-lg"
+              clearable 
+            />
+          </n-form-item>
+        </div>
 
+        <div class="col-span-1 pb-3">
+          <n-form-item label="¿En dólares?" :show-feedback="false">
+            <n-switch 
+              v-model:value="createForm.in_dolars" 
+              size="medium"
+              class="mt-1"
+            />
+          </n-form-item>
+        </div>
+      </div>
 
-				<div class="grid grid-cols-4 items-center gap-3">
-					<div class="col-span-3">
-						<n-form-item :label="`Rate`" show-require-mark
-						:feedback="errors.rate?errors.rate:''"
-						>
-						  <n-input-number 
-						  	min="0"
-						  	v-model:value="createForm.rate"
-						  	:status="errors.rate?'error':''"
-						  	placeholder="Rate"
-						  	clearable 
-						  />
-						</n-form-item>
-					</div>
-					<div class="col-span-1">
-						
-						<n-form-item :label="`Dolares?`" show-require-mark
-						:feedback="errors.in_dolars?errors.in_dolars:''"
-						>
-						  <n-switch 
-						  	:status="errors.in_dolars?'error':''"
-						  	v-model:value="createForm.in_dolars" 
-						  	size="medium"
-						  >
-						    <template #icon>
-						      💚
-						    </template>
-						  </n-switch>
-						</n-form-item>
-					</div>
-				</div>
+      <n-form-item 
+        label="Horas estimadas (0 para libre)" 
+        :feedback="errors.estimate"
+        :validation-status="errors.estimate ? 'error' : undefined"
+      >
+        <n-input-number 
+          v-model:value="createForm.estimate"
+          :min="0"
+          placeholder="0"
+          class="w-full rounded-lg"
+          clearable 
+        />
+      </n-form-item>
 
+      <div class="grid grid-cols-4 items-end gap-4">
+        <div class="col-span-3">
+          <n-form-item label="Identificador visual (Color)">
+            <n-color-picker
+              v-model:value="createForm.color"
+              :swatches="swatches"
+              class="rounded-lg"
+            />
+          </n-form-item>
+        </div>
 
+        <div class="col-span-1 pb-3">
+          <n-button 
+            @click="change_color" 
+            secondary 
+            class="w-full rounded-lg h-[34px] flex items-center justify-center"
+            title="Generar color aleatorio"
+          >
+            <template #icon>
+              <n-icon size="18" class="text-slate-300">
+                <ArrowsShuffle />
+              </n-icon>
+            </template>
+          </n-button>
+        </div>
+      </div>
 
+    </form>
 
+    <template #footer>
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <n-button 
+          secondary 
+          class="rounded-lg" 
+          @click="showModal = false"
+          :disabled="createForm.processing"
+        >
+          Cancelar
+        </n-button>
 
-
-				<n-form-item :label="`Horas Estimadas (0 para libre)`" show-require-mark
-				:feedback="errors.estimate?errors.estimate:''"
-				>
-				  <n-input-number 
-				  	min="0"
-				  	v-model:value="createForm.estimate"
-				  	:status="errors.estimate?'error':''"
-				  	placeholder="Rate"
-				  	clearable 
-				  />
-				</n-form-item>
-
-
-				<div class="grid grid-cols-4 items-center gap-3">
-					<div class="col-span-3">
-						<n-form-item label="Color"
-						:feedback="errors.name?errors.name:''"
-						>
-							<n-color-picker
-								v-model:value="createForm.color"
-								:status="errors.name?'error':''"
-								placeholder="Color"
-								:swatches="swatches"
-							/>
-						</n-form-item>
-					</div>
-					<div>
-						<n-button @click="change_color">
-
-							<template #icon>
-								<n-icon>
-									<ArrowsShuffle/>
-								</n-icon>
-							</template>
-						</n-button>
-					</div>
-				</div>
-
-
-
-
-			</form>
-
-
-			<template #footer>
-				<div>
-					<n-button type="success" block :loading="createForm.processing" :disabled="createForm.processing" @click="submit" attr-type="submit">Crear</n-button>
-
-
-				</div>
-			</template>
-	</n-modal>
+        <n-button 
+          type="primary" 
+          class="rounded-lg px-6 font-semibold"
+          :loading="createForm.processing" 
+          :disabled="createForm.processing" 
+          @click="submit" 
+          attr-type="submit"
+        >
+          Crear Proyecto
+        </n-button>
+      </div>
+    </template>
+  </n-modal>
 </template>
 
-<script setup>
-import { ref, onMounted, watch } from 'vue'
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import pb from '@/lib/pocketbase';
 import { ArrowsShuffle } from '@vicons/tabler'
 
+interface CreateForm {
+  name: string;
+  color: string;
+  rate: number;
+  in_dolars: boolean;
+  estimate: number;
+  processing: boolean;
+}
+
 const showModal = ref(false)
-const errors = ref({})
+const errors = ref<Record<string, string>>({})
+const swatches = ref<string[]>([])
 
-const swatches = ref([])
-
-// Inicializamos el ref. 
-// Nota: Si el prop 'project' ya viene definido al cargar, esto funcionará.
-const createForm = ref({
-    name: '',
-    color: '',
-    rate: 40,
-    in_dolars: true,
-    estimate: 0,
-    processing: false
+const createForm = ref<CreateForm>({
+  name: '',
+  color: '',
+  rate: 40,
+  in_dolars: true,
+  estimate: 0,
+  processing: false
 })
 
 const openModal = () => {
-    showModal.value = !showModal.value
+  showModal.value = !showModal.value
 }
 
-
-// Source - https://stackoverflow.com/a/12276501
-// Posted by Jack Liu Shurui, modified by community. See post 'Timeline' for change history
-// Retrieved 2026-03-03, License - CC BY-SA 3.0
-
-const get_random_color = () => {
-  // Generate a random number between 0 and 0xFFFFFF (16777215 in decimal)
+const get_random_color = (): string => {
   const randomNum = Math.floor(Math.random() * 0xFFFFFF); 
-  // Convert the number to a hexadecimal string
   let hexColor = randomNum.toString(16); 
-  
-  // Pad with leading zeros if the generated hex string is less than 6 digits
-  // The padStart() method ensures the result is always 6 characters long
   hexColor = hexColor.padStart(6, '0');
-
   return `#${hexColor.toUpperCase()}`;
 }
 
-const change_color = () =>{
-	createForm.value.color = get_random_color()
+const change_color = () => {
+  createForm.value.color = get_random_color()
 }
-
 
 const submit = async () => {
-    createForm.value.processing = true; // Feedback visual de carga
-    errors.value = {}; // Limpiamos errores previos
+  createForm.value.processing = true;
+  errors.value = {}; 
 
-    try {
-        // IMPORTANTE: pasamos createForm.value
-        const record = await pb.collection('projects').create(createForm.value);
-        
-        // Limpiamos el formulario después de crear (excepto el proyecto)
-        createForm.value.name = '';
-        createForm.value.rate = 0;
-        
-        showModal.value = false; // Cerramos el modal
-    } catch (error) {
-        console.error("Error en PocketBase:", error);
-        // Aquí podrías mapear los errores que devuelve PocketBase a tu ref 'errors'
-        errors.value = error.data?.data || {}; 
-    } finally {
-        createForm.value.processing = false;
-    }
+  try {
+    // Desestructuramos para no enviar 'processing' a PocketBase
+    const { processing, ...payload } = createForm.value;
+    
+    await pb.collection('projects').create(payload);
+    
+    // Limpieza amigable
+    createForm.value.name = '';
+    createForm.value.rate = 40;
+    createForm.value.estimate = 0;
+    change_color(); // Reiniciar a un color nuevo
+    
+    showModal.value = false; 
+  } catch (error: any) {
+    console.error("Error en PocketBase:", error);
+    errors.value = error.data?.data || {}; 
+  } finally {
+    createForm.value.processing = false;
+  }
 }
 
-
-onMounted(()=>{
-	change_color()
-	for (let i = 0; i < 40; i++) {
-	  swatches.value.push(get_random_color())
-	}
+onMounted(() => {
+  change_color()
+  for (let i = 0; i < 40; i++) {
+    swatches.value.push(get_random_color())
+  }
 })
 </script>
