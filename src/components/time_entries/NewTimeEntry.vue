@@ -1,102 +1,137 @@
 <template>
-  <div class="timer-container p-4 bg-zinc-800 rounded-lg border border-zinc-800">
+  <div class="bg-slate-900 border border-slate-800/60 rounded-3xl p-6 md:p-8 shadow-md transition-all duration-300">
 
-    <div v-if="isTabataMode" class="flex justify-center gap-8 mb-4">
-      <div v-if="currentPhase === 'prepare'" class="text-center p-2 rounded-md bg-yellow-900/40 ring-1 ring-yellow-500 w-64 transition-all">
-        <div class="text-xs uppercase text-yellow-400 font-bold tracking-widest">¡Prepárate!</div>
-        <div class="text-3xl font-mono text-white">{{ remainingTime }}</div>
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+      
+      <div v-if="isTabataMode" class="flex items-center gap-4 w-full md:w-auto">
+        <div 
+          class="flex-1 md:flex-none text-center px-4 py-2 rounded-xl transition-all duration-300 border"
+          :class="[
+            currentPhase === 'prepare' ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400' : 
+            currentPhase === 'work' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 
+            'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+          ]"
+        >
+          <span class="text-xs font-bold tracking-wider uppercase">
+            {{ currentPhase === 'prepare' ? '¡Prepárate!' : currentPhase === 'work' ? 'Enfocado' : 'Descanso' }}
+          </span>
+        </div>
       </div>
 
-      <template v-else>
-        <div :class="['text-center p-2 rounded-md transition-all w-32', currentPhase === 'work' ? 'bg-green-900/40 ring-1 ring-green-500' : 'opacity-40']">
-          <div class="text-xs uppercase text-green-400 font-bold">Trabajando</div>
-          <div class="text-2xl font-mono text-white">{{ formatCountdown(remainingTime) }}</div>
-        </div>
-        
-        <div :class="['text-center p-2 rounded-md transition-all w-32', currentPhase === 'pause' ? 'bg-blue-900/40 ring-1 ring-blue-500' : 'opacity-40']">
-          <div class="text-xs uppercase text-blue-400 font-bold">Descanso</div>
-          <div class="text-2xl font-mono text-white">{{ formatCountdown(remainingTime) }}</div>
-        </div>
-      </template>
+      <div v-else class="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-full border border-slate-700/50">
+        <span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
+        <span class="text-xs font-medium text-slate-400 tracking-wide uppercase">Modo Continuo</span>
+      </div>
+
+      <div class="flex items-center gap-4 text-xs text-slate-500">
+        <span class="flex items-center gap-1.5">
+          <span class="h-1.5 w-1.5 rounded-full" :class="isActive ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'"></span>
+          Mantener encendido
+        </span>
+        <span v-if="currentEntryId" class="flex items-center gap-1.5 text-cyan-400/80">
+          <span class="h-1.5 w-1.5 rounded-full bg-cyan-400"></span>
+          Sincronizado
+        </span>
+      </div>
     </div>
 
-    <div v-else class="flex justify-center mb-4">
-      <div class="bg-zinc-800 text-zinc-400 px-4 py-1 rounded-full text-xs uppercase tracking-widest border border-zinc-700">
-        Modo Cronómetro Continuo
+    <div class="flex flex-col items-center justify-center mb-10 py-4">
+      <div class="relative">
+        <span 
+          class="font-mono text-7xl md:text-8xl font-bold tracking-tighter transition-colors duration-300"
+          :class="[
+            !run ? 'text-slate-600' :
+            currentPhase === 'prepare' ? 'text-cyan-400' :
+            currentPhase === 'work' ? 'text-amber-400' : 'text-emerald-400'
+          ]"
+        >
+          {{ isTabataMode ? formatCountdown(remainingTime) : formattedTotalTime }}
+        </span>
       </div>
+      
+      <span v-if="isTabataMode && run" class="font-mono text-sm text-slate-500 mt-2">
+        Total acumulado: {{ formattedTotalTime }}
+      </span>
     </div>
 
     <n-form
-      ref="formRef"
-      inline
-      :model="formValue"
-      :rules="rules"
-      size="large"
-      class="flex flex-wrap items-center justify-between gap-3"
-    >
-      <n-form-item path="description" class="flex-grow">
-        <n-input v-model:value="formValue.description" :disabled="run" placeholder="¿Qué estás haciendo?" />
-      </n-form-item>
-
-      <n-form-item>
-        <AddProjectButton 
-          :disabled="run"
-          @select-project="(n) => formValue.project = n"
-          @select-task="(t) => formValue.task = t" 
-        />
-      </n-form-item>
-
-      <n-form-item>
-        <AddTagSelect 
-          :disabled="run"
-          @select-tag="(n) => formValue.tag = n"
-        />
-      </n-form-item>
-
-      <n-form-item label="Trabajo">
-        <n-input-number v-model:value="formValue.work" :min="0" :disabled="run" style="width: 85px" placeholder="Min" />
-      </n-form-item>
-
-      <n-form-item label="Pausa">
-        <n-input-number v-model:value="formValue.pause" :min="0" :disabled="run" style="width: 85px" placeholder="Min" />
-      </n-form-item>
-
-      <n-form-item>
-        <n-switch v-model:value="formValue.non_billable" :disabled="run">
-          <template #icon>💲</template>
-        </n-switch>
-      </n-form-item>
-
-      <n-form-item>
-        <span :class="['text-xl font-mono font-bold transition-colors', run ? 'text-green-500' : 'text-zinc-600']">
-          {{ formattedTotalTime }}
-        </span>
-      </n-form-item>
-
-      <n-form-item>
-        <n-button 
-          @click="handleToggle" 
-          :type="run ? 'error' : 'primary'"
-          :loading="formValue.processing"
-          class="w-24"
-          strong
-          secondary
+          ref="formRef"
+          :model="formValue"
+          :rules="rules"
+          size="large"
+          class="bg-slate-800/30 p-5 rounded-2xl border border-slate-800/50"
         >
-          {{ run ? 'Stop' : 'Start' }}
-        </n-button>
-      </n-form-item>
-    </n-form>
+          <div class="flex flex-nowrap items-center justify-between gap-4 w-full">
+            
+            <div class="flex-grow max-w-[250px]">
+              <n-form-item path="description" :show-label="false" class="!mb-0">
+                <n-input 
+                  v-model:value="formValue.description" 
+                  :disabled="run" 
+                  placeholder="¿En qué vas a trabajar?" 
+                  class="rounded-lg w-full"
+                  clearable
+                />
+              </n-form-item>
+            </div>
 
-    <div class="flex justify-between items-center mt-4 px-2 text-[10px] text-zinc-600">
-      <div class="flex gap-4 items-center">
-        <span>Modo: {{ isTabataMode ? 'Tabata' : 'Infinito' }}</span>
-        <span :class="isActive ? 'text-green-500' : 'text-zinc-500'">
-          🛡️ Mantener encendido: {{ isActive ? 'ACTIVO' : 'Inactivo' }}
-        </span>
-        <span v-if="currentEntryId" class="text-blue-500">Sincronizado: {{ currentEntryId }}</span>
-      </div>
-      <span v-if="run">Estado: {{ currentPhase }} | Restante: {{ remainingTime }}s</span>
-    </div>
+            <div class="flex-shrink-0">
+              <n-form-item :show-label="false" class="!mb-0">
+                <AddProjectButton 
+                  :disabled="run"
+                  @select-project="(n) => formValue.project = n"
+                  @select-task="(t) => formValue.task = t" 
+                />
+              </n-form-item>
+            </div>
+
+            <div class="flex-grow max-w-[140px]">
+              <n-form-item :show-label="false" class="!mb-0">
+                <AddTagSelect 
+                  :disabled="run"
+                  @select-tag="(n) => formValue.tag = n"
+                />
+              </n-form-item>
+            </div>
+
+            <div class="flex flex-shrink-0 items-center gap-3">
+              <div class="flex items-center gap-1.5">
+                <n-form-item :show-label="false" class="!mb-0">
+                  <n-input-number v-model:value="formValue.work" :min="0" :disabled="run" class="w-16 rounded-lg" :show-button="false" placeholder="Min" />
+                </n-form-item>
+              </div>
+
+              <div class="flex items-center gap-1.5">
+                <n-form-item :show-label="false" class="!mb-0">
+                  <n-input-number v-model:value="formValue.pause" :min="0" :disabled="run" class="w-16 rounded-lg" :show-button="false" placeholder="Min" />
+                </n-form-item>
+              </div>
+            </div>
+
+            <div class="flex-shrink-0">
+              <n-form-item :show-label="false" class="!mb-0">
+                <n-switch v-model:value="formValue.non_billable" :disabled="run">
+                  <template #icon>💲</template>
+                </n-switch>
+              </n-form-item>
+            </div>
+
+            <div class="flex-shrink-0">
+              <n-form-item :show-label="false" class="!mb-0">
+                <n-button 
+                  @click="handleToggle" 
+                  :type="run ? 'error' : 'primary'"
+                  :loading="formValue.processing"
+                  class="rounded-xl px-6 font-semibold shadow-sm w-32 h-11 tracking-wide"
+                >
+                  {{ run ? 'Parar' : 'Empezar' }}
+                </n-button>
+              </n-form-item>
+            </div>
+
+          </div>
+        </n-form>
+
   </div>
 </template>
 
@@ -111,19 +146,16 @@ import AddTagSelect from '@/components/time_entries/AddTagSelect.vue'
 import pb from '@/lib/pocketbase'
 import { useTimerStore } from '@/stores/timer'
 
-// --- ASSETS ---
+// Assets
 import StartSound from '@/assets/sounds/start.mp3'
 import EndSound from '@/assets/sounds/end.mp3'
 import IcoPause from '@/assets/icopause.png'
 import IcoWork from '@/assets/icowork.png'
 
-// --- STORE DE PINIA ---
 const store = useTimerStore()
 const { execute, setPhase } = store
 
-// --- HOTKEYS CORREGIDO ---
 onKeyStroke('s', async (e) => {
-  // Verificamos si el foco está en un elemento de texto
   const target = e.target as HTMLElement;
   const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
 
@@ -134,14 +166,11 @@ onKeyStroke('s', async (e) => {
   }
 })
 
-// --- WAKE LOCK ---
 const { isSupported, isActive, request, release } = useWakeLock()
 
-// --- SONIDOS ---
 const { play: playPrepSound } = useSound(StartSound)
 const { play: playWorkEnding } = useSound(EndSound)
 
-// --- ESTADO LOCAL ---
 const formRef = ref<FormInst | null>(null)
 const message = useMessage()
 const run = ref(false)
@@ -166,13 +195,10 @@ const formValue = ref({
 
 const rules = { description: { required: false } }
 
-// --- LÓGICA COMPUTADA ---
-
 const isTabataMode = computed(() => {
   return (formValue.value.work ?? 0) > 0 && (formValue.value.pause ?? 0) > 0
 })
 
-// LÓGICA DEL FAVICON
 const favicon = computed(() => {
   if (!run.value) return '/favicon.ico' 
   if (currentPhase.value === 'pause') return IcoPause
@@ -193,8 +219,6 @@ const formatCountdown = (totalSeconds: number) => {
   const s = totalSeconds % 60
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
 }
-
-// --- EL CORAZÓN DEL TIMER ---
 
 async function tick() {
   if (!isTabataMode.value || currentPhase.value === 'work') {
@@ -220,7 +244,7 @@ async function tick() {
   } else if (remainingTime.value > 0) {
     remainingTime.value--
     if (remainingTime.value === 3) {
-       currentPhase.value === 'work' ? playWorkEnding() : playPrepSound()
+      currentPhase.value === 'work' ? playWorkEnding() : playPrepSound()
     }
   } else {
     if (currentPhase.value === 'work') {
@@ -239,8 +263,6 @@ async function tick() {
 
 const { resume, pause } = useTimeoutPoll(tick, 1000, { immediate: false })
 
-// --- ACCIONES ---
-
 const handleToggle = () => {
   formRef.value?.validate(async (errors) => {
     if (errors) return
@@ -250,7 +272,6 @@ const handleToggle = () => {
     } else {
       await stopSession()
     }
-    
     execute() 
   })
 }
@@ -260,7 +281,6 @@ const startSession = async () => {
   try {
     if (isSupported.value) await request('screen')
 
-    // USAMOS .toISOString() para que PocketBase reciba UTC real
     formValue.value.start = new Date().toISOString()
     
     const record = await pb.collection('time_entries').create({
@@ -338,9 +358,3 @@ onUnmounted(() => {
   if (isActive.value) release()
 })
 </script>
-
-<style scoped>
-.transition-all {
-  transition: all 0.3s ease;
-}
-</style>

@@ -1,74 +1,100 @@
 <template>
-  <n-button type="primary" secondary strong @click="openModal">
-    ➕ Entrada Manual
+  <n-button 
+    secondary 
+    class="rounded-xl font-medium tracking-wide shadow-sm hover:shadow-md transition-all duration-300" 
+    @click="openModal"
+  >
+    <template #icon>
+      <span class="text-lg">+</span>
+    </template>
+    Entrada Manual
   </n-button>
 
   <n-modal 
     v-model:show="showModal" 
     preset="card"
-    title="Nueva Entrada Manual"
+    title="📝 Nueva Entrada Manual"
     style="width: 550px"
     size="huge"
-    class="bg-zinc-900"
+    class="rounded-2xl bg-slate-900 border border-slate-800 shadow-xl"
   >
     <n-form
       ref="formRef"
       :model="formValue"
       :rules="rules"
       label-placement="top"
+      class="space-y-4"
     >
-      <n-form-item label="Descripción" path="description">
-        <n-input v-model:value="formValue.description" placeholder="¿Qué hiciste?" />
+      <n-form-item label="¿Qué estuviste haciendo?" path="description">
+        <n-input 
+          v-model:value="formValue.description" 
+          placeholder="Ej: Reunión de diseño de interfaz" 
+          class="rounded-lg"
+          clearable
+        />
       </n-form-item>
 
       <div class="grid grid-cols-2 gap-4">
-        <n-form-item label="Hora Inicio (HHmm)">
+        <n-form-item label="Hora de Inicio">
           <n-input 
             v-model:value="startTimeRaw" 
-            placeholder="Ej: 0830 o 2030"
+            placeholder="08:30"
+            class="rounded-lg"
             @blur="formatAndProcessTime('start')"
             @keyup.enter="formatAndProcessTime('start')"
           >
-            <template #prefix>🕒</template>
+            <template #prefix>
+              <span class="text-slate-400 text-xs font-mono mr-1">HH:MM</span>
+            </template>
           </n-input>
         </n-form-item>
 
-        <n-form-item label="Hora Fin (HHmm)">
+        <n-form-item label="Hora de Finalización">
           <n-input 
             v-model:value="endTimeRaw" 
-            placeholder="Ej: 0900 o 2100"
+            placeholder="12:00"
+            class="rounded-lg"
             @blur="formatAndProcessTime('end')"
             @keyup.enter="formatAndProcessTime('end')"
           >
-            <template #prefix>🏁</template>
+            <template #prefix>
+              <span class="text-slate-400 text-xs font-mono mr-1">HH:MM</span>
+            </template>
           </n-input>
         </n-form-item>
       </div>
 
-      <div class="flex items-center justify-between bg-zinc-800 p-4 rounded-lg mb-6 border border-zinc-700 shadow-inner">
-        <div class="flex flex-col">
-          <span class="text-zinc-400 text-[10px] uppercase tracking-widest font-bold">Duración Total</span>
-          <span class="text-zinc-500 text-[9px]">Calculado automáticamente</span>
+      <div class="flex items-center justify-between bg-slate-800/50 p-5 rounded-2xl border border-slate-800/60 shadow-inner">
+        <div class="flex flex-col gap-0.5">
+          <span class="text-slate-400 text-xs font-semibold tracking-wider uppercase">Duración Calculada</span>
+          <span class="text-slate-500 text-xs">Ajuste automático de rango</span>
         </div>
-        <div :class="['text-3xl font-mono font-bold', formValue.duration > 0 ? 'text-green-500' : 'text-zinc-600']">
+        <div 
+          class="text-3xl font-mono font-bold transition-colors duration-300"
+          :class="formValue.duration > 0 ? 'text-emerald-400' : 'text-slate-600'"
+        >
           {{ formattedTotalTime }}
         </div>
       </div>
 
       <div class="grid grid-cols-2 gap-4">
-        <n-form-item label="Proyecto / Tarea">
-          <AddProjectButton 
-            @select-project="(n) => formValue.project = n"
-            @select-task="(t) => formValue.task = t" 
-          />
+        <n-form-item label="Asignar Proyecto">
+          <div class="w-full">
+            <AddProjectButton 
+              @select-project="(n) => formValue.project = n"
+              @select-task="(t) => formValue.task = t" 
+            />
+          </div>
         </n-form-item>
 
         <n-form-item label="Etiqueta">
-          <AddTagSelect @select-tag="(n) => formValue.tag = n" />
+          <div class="w-full">
+            <AddTagSelect @select-tag="(n) => formValue.tag = n" />
+          </div>
         </n-form-item>
       </div>
 
-      <n-form-item label="No facturable">
+      <n-form-item label="¿Es una tarea no facturable?">
         <n-switch v-model:value="formValue.non_billable">
           <template #icon>💲</template>
         </n-switch>
@@ -76,13 +102,23 @@
     </n-form>
 
     <template #footer>
-      <div class="flex justify-end gap-3">
-        <n-button @click="showModal = false">Cancelar</n-button>
+      <div class="flex justify-end items-center gap-3 pt-2">
+        <n-button 
+          secondary 
+          class="rounded-lg" 
+          @click="showModal = false"
+          :disabled="formValue.processing"
+        >
+          Cancelar
+        </n-button>
+        
         <n-button 
           type="primary" 
+          class="rounded-lg px-6 font-semibold"
           :loading="formValue.processing" 
           :disabled="formValue.duration <= 0"
           @click="submit"
+          attr-type="submit"
         >
           Guardar Entrada
         </n-button>
@@ -94,7 +130,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useMessage, type FormInst } from 'naive-ui'
-import { startOfMinute, setHours, setMinutes } from 'date-fns' // Quitamos formatISO
+import { startOfMinute, setHours, setMinutes } from 'date-fns'
 import AddProjectButton from '@/components/time_entries/AddProjectButton.vue'
 import AddTagSelect from '@/components/time_entries/AddTagSelect.vue'
 import pb from '@/lib/pocketbase'
@@ -151,7 +187,6 @@ const formatAndProcessTime = (type: 'start' | 'end') => {
   if (hours > 23) hours = 23
   if (minutes > 59) minutes = 59
 
-  // IMPORTANTE: Esto crea una fecha en tu hora local (Argentina)
   let date = startOfMinute(new Date())
   date = setHours(date, hours)
   date = setMinutes(date, minutes)
@@ -192,10 +227,8 @@ const submit = async () => {
 
     formValue.value.processing = true
     try {
-      // CONVERSIÓN CORRECTA A ISO UTC
       const dataToSave = {
         ...formValue.value,
-        // .toISOString() convierte el timestamp local a UTC 'Z' automáticamente
         start: startTimeTs.value ? new Date(startTimeTs.value).toISOString() : null,
         end: endTimeTs.value ? new Date(endTimeTs.value).toISOString() : null,
       }

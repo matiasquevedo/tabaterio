@@ -1,85 +1,122 @@
 <template>
-  <div class="p-6">
-    <div v-if="loading" class="text-zinc-500 animate-pulse">
-      Cargando historial...
+  <div class="py-2">
+    
+    <div v-if="loading" class="flex flex-col items-center justify-center py-12 gap-3 text-slate-400">
+      <span class="h-6 w-6 rounded-full border-2 border-t-cyan-400 border-slate-700 animate-spin"></span>
+      <span class="text-sm tracking-wide">Obteniendo tus registros...</span>
     </div>
+
     <div v-else>
-      <div class="flex justify-between mb-4 items-center">
-        <h2 class="text-xl font-bold">Entradas</h2>
+      <div class="flex justify-between mb-6 items-center">
+        <div class="flex items-center gap-2">
+          <h2 class="text-xl font-bold text-white tracking-tight">Entradas de Tiempo</h2>
+        </div>
+        
         <NewTimeEntryManualModal />
       </div>
-      
+
       <div v-if="groupedEntries.length" class="overflow-x-auto">
-        <table class="min-w-full divide-y text-white bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
-          <thead class="bg-zinc-800">
-            <tr>
-              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-400">Hora / Fecha</th>
-              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-400">Descripción</th>
-              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-400">Duración Total</th>
-              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-400">
-                
-              </th>
-              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-400">Proyecto</th>
-              <th class="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider text-zinc-400">Acciones</th>
+        <table class="min-w-full text-white text-left whitespace-nowrap">
+          <thead>
+            <tr class="text-xs font-semibold tracking-wider text-slate-400 uppercase">
+              <th class="pb-4 px-4">Hora / Fecha</th>
+              <th class="pb-4 px-4">Descripción</th>
+              <th class="pb-4 px-4">Duración Total</th>
+              <th class="pb-4 px-4">Facturable</th>
+              <th class="pb-4 px-4">Proyecto / Tarea</th>
+              <th class="pb-4 px-4 text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-zinc-800">
-            <tr v-for="(group, index) in groupedEntries" :key="index" class="hover:bg-zinc-800/50 transition-colors">
-              <td class="px-4 py-3 text-sm font-mono text-zinc-500">
-                <div class="text-xs">{{ formatDate(group.latestStart) }}</div>
-                <div class="text-zinc-300">{{ formatRange(group.earliestStart, group.latestEnd) }}</div>
-              </td>
-
-              <td class="px-4 py-3 text-sm">
-                <div class="flex items-center gap-2">
-                  <span class="font-medium">{{ group.description || '(Sin descripción)' }}</span>
-                  <n-badge v-if="group.count > 1" :value="group.count" type="info" :max="99" />
-                </div>
-
-                <div v-if="group.tag" class="mt-1">
-                  <n-tag round :bordered="false" type="success" size="small">
-                    {{ group.tag.name }}
-                    <template #icon><n-icon :component="Tag" /></template>
-                  </n-tag>
+          <tbody class="text-sm divide-y divide-slate-800/50">
+            <tr 
+              v-for="(group, index) in groupedEntries" 
+              :key="index" 
+              class="group hover:bg-slate-800/30 transition-colors duration-200"
+            >
+              <td class="py-4 px-4">
+                <div class="flex flex-col gap-0.5 font-mono">
+                  <span class="text-xs text-slate-400 capitalize">{{ formatDate(group.latestStart) }}</span>
+                  <span class="text-sm font-semibold text-white">{{ formatRange(group.earliestStart, group.latestEnd) }}</span>
                 </div>
               </td>
 
-              <td class="px-4 py-3 text-sm font-mono font-bold text-green-500">
+              <td class="py-4 px-4">
+                <div class="flex flex-col gap-1.5">
+                  <div class="flex items-center gap-2">
+                    <span class="font-medium text-white group-hover:text-cyan-400 transition-colors duration-200">
+                      {{ group.description || '(Sin descripción)' }}
+                    </span>
+                    
+                    <span v-if="group.count > 1" class="px-2 py-0.5 text-xs font-bold rounded-full bg-cyan-500/20 text-cyan-300">
+                      {{ group.count }}
+                    </span>
+                  </div>
+
+                  <div v-if="group.tag">
+                    <n-tag round :bordered="false" type="success" size="small" class="bg-emerald-500/10 text-emerald-400">
+                      <template #icon>
+                        <n-icon :component="Tag" />
+                      </template>
+                      {{ group.tag.name }}
+                    </n-tag>
+                  </div>
+                </div>
+              </td>
+
+              <td class="py-4 px-4 font-mono font-bold text-base text-emerald-400">
                 {{ formattedTime(group.totalDuration) }}
               </td>
 
-              <td>
-                <NonBillableSetButton :id="group.latestId" :nonBillable="group.non_billable" />
+              <td class="py-4 px-4">
+                <div class="opacity-80 group-hover:opacity-100 transition-opacity">
+                  <NonBillableSetButton :id="group.latestId" :nonBillable="group.non_billable" />
+                </div>
               </td>
 
-
-              <td class="px-4 py-3 text-sm">
-                <p v-if="group.project" :style="{ color: group.project.color }">
-                  <router-link :to="{ name: 'proyectos.show', params: { id: group.project.id } }" class="hover:underline">
-                    {{ group.project.name }}{{ group.task ? `:${group.task.name}` : '' }}
-                  </router-link>
-                </p>
-                <span v-else class="text-zinc-600 italic text-xs">Sin proyecto</span>
+              <td class="py-4 px-4">
+                <div v-if="group.project" class="flex items-center gap-2">
+                  <ColorCircle :color="group.project.color" size="sm" />
+                  
+                  <div class="flex flex-col">
+                    <router-link 
+                      :to="{ name: 'proyectos.show', params: { id: group.project.id } }" 
+                      class="text-sm font-medium text-white hover:text-cyan-400 transition-colors"
+                    >
+                      {{ group.project.name }}<span v-if="group.task">:{{ group.task.name }}
+                    </span>
+                    </router-link>
+                    
+                  </div>
+                </div>
+                <span v-else class="text-xs italic text-slate-500">Sin proyecto</span>
               </td>
 
-              <td class="px-4 py-3 text-right">
-                <DeleteTimeEntryModal :id="group.latestId" />
-
-                <CloneEntryTime :id="group.latestId" />
+              <td class="py-4 px-4 text-right">
+                <div class="flex items-center justify-end gap-2 opacity-30 group-hover:opacity-100 transition-opacity duration-200">
+                  <CloneEntryTime :id="group.latestId" />
+                  <DeleteTimeEntryModal :id="group.latestId" />
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <div v-else>
-        <n-empty description="No hay entradas registradas">
-          <template #extra>
-            <n-button size="small" @click="loadData">Actualizar</n-button>
-          </template>
-        </n-empty>
+      <div v-else class="py-16 flex flex-col items-center justify-center text-slate-400 bg-slate-900/30 rounded-2xl border border-slate-800/50">
+        <span class="text-5xl mb-4">⏱️</span>
+        <h3 class="text-base font-bold text-white mb-1">No hay entradas de tiempo registradas</h3>
+        <p class="text-sm text-slate-500 mb-6 max-w-sm text-center">Iniciá el temporizador para empezar a trackear tu actividad de trabajo o estudio.</p>
+        
+        <n-button 
+          secondary 
+          class="rounded-lg tracking-wide" 
+          @click="loadData"
+        >
+          Actualizar Tabla
+        </n-button>
       </div>
     </div>
+
   </div>
 </template>
 
@@ -91,9 +128,10 @@ import DeleteTimeEntryModal from '@/components/time_entries/DeleteTimeEntryModal
 import NewTimeEntryManualModal from '@/components/time_entries/NewTimeEntryManualModal.vue';
 import CloneEntryTime from '@/components/time_entries/CloneEntryTime.vue';
 import NonBillableSetButton from '@/components/time_entries/NonBillableSetButton.vue';
+import ColorCircle from '@/components/ColorCircle.vue';
 
 import pb from '@/lib/pocketbase';
-import { Tag, CurrencyDollar } from '@vicons/tabler';
+import { Tag } from '@vicons/tabler';
 
 const entries = ref<any[]>([]);
 const loading = ref(false);
@@ -114,7 +152,6 @@ const loadData = async () => {
   }
 };
 
-// --- LÓGICA DE AGRUPACIÓN CONSECUTIVA ---
 const groupedEntries = computed(() => {
   const groups: any[] = [];
   if (entries.value.length === 0) return groups;
@@ -122,7 +159,6 @@ const groupedEntries = computed(() => {
   entries.value.forEach((entry) => {
     const lastGroup = groups[groups.length - 1];
     
-    // Criterio: Misma descripción Y mismo proyecto
     const canGroup = lastGroup && 
                      lastGroup.description === entry.description &&
                      lastGroup.project?.id === entry.expand?.project?.id;
@@ -131,11 +167,9 @@ const groupedEntries = computed(() => {
       lastGroup.count += 1;
       lastGroup.totalDuration += (entry.duration || 0);
       
-      // Solo actualizamos si las fechas son válidas
       if (entry.start && new Date(entry.start) < new Date(lastGroup.earliestStart)) {
         lastGroup.earliestStart = entry.start;
       }
-      // El fin puede ser nulo si la tarea está activa
       if (entry.end && (!lastGroup.latestEnd || new Date(entry.end) > new Date(lastGroup.latestEnd))) {
         lastGroup.latestEnd = entry.end;
       }
@@ -148,7 +182,7 @@ const groupedEntries = computed(() => {
         earliestStart: entry.start,
         latestStart: entry.start,
         non_billable: entry.non_billable,
-        latestEnd: entry.end || null, // Manejamos nulo para tareas activas
+        latestEnd: entry.end || null,
         project: entry.expand?.project,
         task: entry.expand?.task,
         tag: entry.expand?.tag
@@ -159,7 +193,6 @@ const groupedEntries = computed(() => {
   return groups;
 });
 
-// --- FORMATEADORES CON "GUARDIAS" ---
 const formattedTime = (s: number) => {
   if (!s || s < 0) return '00:00:00';
   const hours = Math.floor(s / 3600).toString().padStart(2, '0');
@@ -182,16 +215,13 @@ const formatRange = (startStr: string, endStr: string) => {
   if (!isValid(start)) return '--:--';
   
   const sFormated = format(start, 'HH:mm');
-  // Si no hay fecha de fin (tarea activa), mostramos "Ahora"
   const eFormated = (end && isValid(end)) ? format(end, 'HH:mm') : '...';
   
   return `${sFormated} — ${eFormated}`;
 };
 
-// --- REALTIME ---
 const subscribe = async () => {
   await pb.collection('time_entries').subscribe('*', (e) => {
-    // Recargamos datos para asegurar consistencia en el agrupamiento
     if (e.action === 'create') {
       entries.value.unshift(e.record);
     } else if (e.action === 'update') {
@@ -199,8 +229,7 @@ const subscribe = async () => {
     } else if (e.action === 'delete') {
       entries.value = entries.value.filter(item => item.id !== e.record.id);
     }
-    
-  },{sort: '-start', expand: "project, task, tag"  });
+  }, { sort: '-start', expand: "project, task, tag" });
 };
 
 onMounted(async () => {
