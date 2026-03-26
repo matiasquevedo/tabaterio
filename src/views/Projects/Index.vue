@@ -4,10 +4,8 @@
       <template #header>
         <div class="flex justify-between items-center">
           <h1 class="font-semibold text-2xl leading-tight">
-              Proyectos
+              Proyectos sss
           </h1>
-
-          <CreateModal/>
 
 
           <CreateProjectModal />
@@ -15,9 +13,7 @@
         </div>
       </template>
 
-      <div class="p-6">
-
-
+      <div class="p-3">
 
         <div v-if="loading">
           cargando

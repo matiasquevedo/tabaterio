@@ -16,6 +16,9 @@
               <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-400">Hora / Fecha</th>
               <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-400">Descripción</th>
               <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-400">Duración Total</th>
+              <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-400">
+                
+              </th>
               <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-zinc-400">Proyecto</th>
               <th class="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider text-zinc-400">Acciones</th>
             </tr>
@@ -45,10 +48,15 @@
                 {{ formattedTime(group.totalDuration) }}
               </td>
 
+              <td>
+                <NonBillableSetButton :id="group.latestId" :nonBillable="group.non_billable" />
+              </td>
+
+
               <td class="px-4 py-3 text-sm">
                 <p v-if="group.project" :style="{ color: group.project.color }">
                   <router-link :to="{ name: 'proyectos.show', params: { id: group.project.id } }" class="hover:underline">
-                    {{ group.project.name }}{{ group.task ? ` : ${group.task.name}` : '' }}
+                    {{ group.project.name }}{{ group.task ? `:${group.task.name}` : '' }}
                   </router-link>
                 </p>
                 <span v-else class="text-zinc-600 italic text-xs">Sin proyecto</span>
@@ -56,6 +64,8 @@
 
               <td class="px-4 py-3 text-right">
                 <DeleteTimeEntryModal :id="group.latestId" />
+
+                <CloneEntryTime :id="group.latestId" />
               </td>
             </tr>
           </tbody>
@@ -79,8 +89,11 @@ import { format, isValid } from 'date-fns';
 import { es } from 'date-fns/locale';
 import DeleteTimeEntryModal from '@/components/time_entries/DeleteTimeEntryModal.vue';
 import NewTimeEntryManualModal from '@/components/time_entries/NewTimeEntryManualModal.vue';
+import CloneEntryTime from '@/components/time_entries/CloneEntryTime.vue';
+import NonBillableSetButton from '@/components/time_entries/NonBillableSetButton.vue';
+
 import pb from '@/lib/pocketbase';
-import { Tag } from '@vicons/tabler';
+import { Tag, CurrencyDollar } from '@vicons/tabler';
 
 const entries = ref<any[]>([]);
 const loading = ref(false);
@@ -134,6 +147,7 @@ const groupedEntries = computed(() => {
         count: 1,
         earliestStart: entry.start,
         latestStart: entry.start,
+        non_billable: entry.non_billable,
         latestEnd: entry.end || null, // Manejamos nulo para tareas activas
         project: entry.expand?.project,
         task: entry.expand?.task,

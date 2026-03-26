@@ -1,5 +1,5 @@
 <template>
-  <div class="timer-container p-4 bg-zinc-900 rounded-lg border border-zinc-800">
+  <div class="timer-container p-4 bg-zinc-800 rounded-lg border border-zinc-800">
 
     <div v-if="isTabataMode" class="flex justify-center gap-8 mb-4">
       <div v-if="currentPhase === 'prepare'" class="text-center p-2 rounded-md bg-yellow-900/40 ring-1 ring-yellow-500 w-64 transition-all">

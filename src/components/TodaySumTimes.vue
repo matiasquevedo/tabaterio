@@ -1,20 +1,21 @@
 <template>
   <div class="p-6 flex gap-2 items-center">
     <div class="font-mono text-zinc-500 text-base">
-      {{formatDate(todayStart)}}: 
+      {{ formatDate(new Date()) }}: 
     </div>
+
     <div v-if="loading" class="text-zinc-500 animate-pulse">
       Cargando tiempo de hoy...
     </div>
     <div v-else class="text-xl font-bold tracking-tight">
       <div v-if="entries.length" class="flex items-center gap-2">
-        <span class="text-zinc-400 font-normal">{{entries.length}} -> </span>
         <span class="font-mono text-green-500">{{ formattedTime(sumTime) }}</span>
       </div>
       <div v-else class="text-zinc-500 flex items-center gap-2">
         <span class="font-mono">{{ formattedTime(0) }} 🖕</span> 
       </div>
     </div>
+
   </div>
 </template>
 
@@ -22,7 +23,6 @@
 import { ref, onMounted, computed, onUnmounted } from 'vue';
 import { startOfDay, endOfDay, format, isValid } from 'date-fns';
 import { es } from 'date-fns/locale';
-
 import _ from 'lodash';
 import pb from '@/lib/pocketbase';
 
@@ -30,14 +30,18 @@ const entries = ref<any[]>([]);
 const loading = ref(false);
 
 /**
- * LÓGICA DE FECHAS UTC (Ajuste para Argentina UTC-3)
- * .toISOString() convierte tu hora local a la hora Z (Londres) que PocketBase espera.
+ * CONSTRUCCIÓN DEL FILTRO SEGÚN DOCUMENTACIÓN
+ * PocketBase compara fechas como strings: 'YYYY-MM-DD HH:mm:ss.SSSZ'
+ * Usamos format() para forzar ese formato exacto independientemente de la zona horaria.
  */
-const todayStart = startOfDay(new Date()).toISOString();
-const todayEnd = endOfDay(new Date()).toISOString();
+const todayStart = format(startOfDay(new Date()), "yyyy-MM-dd HH:mm:ss.SSS'Z'");
+const todayEnd = format(endOfDay(new Date()), "yyyy-MM-dd HH:mm:ss.SSS'Z'");
 
-// Filtramos por 'start' para capturar las tareas que pertenecen al día de hoy
-const dateFilter = `start >= '${todayStart}' && start <= '${todayEnd}'`;
+// Aplicamos el filtro sobre el campo 'created' como indica la documentación
+const dateFilter = `non_billable = false && created >= "${todayStart}" && created <= "${todayEnd}"`;
+
+// const dateFilter = `non_billable = false && created >= @todayStart && created <= @todayEnd`;
+
 
 const loadData = async () => {
   if (loading.value) return;
@@ -45,13 +49,13 @@ const loadData = async () => {
   
   try {
     const records = await pb.collection('time_entries').getFullList({
-      fields: 'id,duration,start', 
+      fields: 'id,duration,created, non_billable', 
       filter: dateFilter,
-      sort: '-start'
+      sort: '-created'
     });
     entries.value = records;
   } catch (error) {
-    console.error("Error cargando horas de hoy:", error);
+    console.error("Error en filtro PocketBase:", error);
   } finally {
     loading.value = false;
   }
@@ -62,12 +66,9 @@ const sumTime = computed(() => {
 });
 
 const subscribeRealTime = async () => {
-  // Guardamos la suscripción para poder cancelarla si fuera necesario
   await pb.collection('time_entries').subscribe('*', (e) => {
-    // Solo procesamos si la entrada pertenece al rango de hoy
-    // (PocketBase enviará cualquier cambio en la colección, hay que validar)
-    const entryDate = e.record.start;
-    const isToday = entryDate >= todayStart && entryDate <= todayEnd;
+    // Validación de string simple para el tiempo real
+    const isToday = e.record.created >= todayStart && e.record.created <= todayEnd;
 
     if (!isToday && e.action !== 'delete') return;
 
@@ -78,7 +79,7 @@ const subscribeRealTime = async () => {
     } else if (e.action === 'delete') {
       entries.value = entries.value.filter(item => item.id !== e.record.id);
     }
-  }, { fields: 'id,duration,start', filter: dateFilter });
+  }, { fields: 'id,duration,created', filter: dateFilter });
 };
 
 const formattedTime = (s: number) => {
@@ -88,11 +89,8 @@ const formattedTime = (s: number) => {
   return `${hours}:${minutes}:${seconds}`;
 };
 
-const formatDate = (dateStr: string) => {
-  if (!dateStr) return 'Fecha desconocida';
-  const d = new Date(dateStr);
-  if (!isValid(d)) return 'Fecha inválida';
-  return format(d, "eee, d 'de' MMM", { locale: es });
+const formatDate = (date: Date) => {
+  return format(date, "eee, d 'de' MMM", { locale: es });
 };
 
 onMounted(async () => {
@@ -100,7 +98,6 @@ onMounted(async () => {
   subscribeRealTime();
 });
 
-// Limpiamos la suscripción al destruir el componente para evitar fugas de memoria
 onUnmounted(() => {
   pb.collection('time_entries').unsubscribe('*');
 });

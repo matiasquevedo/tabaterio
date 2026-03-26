@@ -94,7 +94,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useMessage, type FormInst } from 'naive-ui'
-import { formatISO, startOfMinute, setHours, setMinutes } from 'date-fns'
+import { startOfMinute, setHours, setMinutes } from 'date-fns' // Quitamos formatISO
 import AddProjectButton from '@/components/time_entries/AddProjectButton.vue'
 import AddTagSelect from '@/components/time_entries/AddTagSelect.vue'
 import pb from '@/lib/pocketbase'
@@ -103,11 +103,8 @@ const message = useMessage()
 const showModal = ref(false)
 const formRef = ref<FormInst | null>(null)
 
-// Estados para el texto "crudo" que escribe el usuario
 const startTimeRaw = ref('')
 const endTimeRaw = ref('')
-
-// Timestamps para cálculos
 const startTimeTs = ref<number | null>(null)
 const endTimeTs = ref<number | null>(null)
 
@@ -124,33 +121,23 @@ const formValue = ref({
 })
 
 const rules = {
-  description: { required: false, message: 'La descripción es necesaria', trigger: 'blur' }
+  description: { required: false }
 }
 
 const openModal = () => {
   showModal.value = true
-  // Inicializamos con la hora actual vacía para forzar la entrada del usuario
   startTimeRaw.value = ''
   endTimeRaw.value = ''
 }
 
-// --- LÓGICA DE PARSEO "SMART" ---
-
 const formatAndProcessTime = (type: 'start' | 'end') => {
   let val = type === 'start' ? startTimeRaw.value : endTimeRaw.value
-  
-  // Limpiar todo lo que no sea número
   val = val.replace(/\D/g, '')
   if (!val) return
 
   let hours = 0
   let minutes = 0
 
-  // Casos de entrada:
-  // "8" -> 08:00
-  // "20" -> 20:00
-  // "830" -> 08:30
-  // "2030" -> 20:30
   if (val.length <= 2) {
     hours = parseInt(val)
   } else if (val.length === 3) {
@@ -161,16 +148,14 @@ const formatAndProcessTime = (type: 'start' | 'end') => {
     minutes = parseInt(val.substring(2))
   }
 
-  // Validaciones básicas
   if (hours > 23) hours = 23
   if (minutes > 59) minutes = 59
 
-  // Crear fecha (del día de hoy)
+  // IMPORTANTE: Esto crea una fecha en tu hora local (Argentina)
   let date = startOfMinute(new Date())
   date = setHours(date, hours)
   date = setMinutes(date, minutes)
 
-  // Actualizar el valor visual para que el usuario vea el formato HH:mm
   const formatted = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
   
   if (type === 'start') {
@@ -182,15 +167,11 @@ const formatAndProcessTime = (type: 'start' | 'end') => {
   }
 }
 
-// --- CALCULO DE DURACIÓN ---
-
 watch([startTimeTs, endTimeTs], ([newStart, newEnd]) => {
   if (newStart && newEnd) {
     if (newEnd > newStart) {
       formValue.value.duration = Math.floor((newEnd - newStart) / 1000)
     } else {
-      // Si el fin es menor (ej: 23:00 a 01:00), podrías sumar 24h, 
-      // pero por ahora lo dejamos en 0 para evitar errores.
       formValue.value.duration = 0
     }
   }
@@ -205,18 +186,18 @@ const formattedTotalTime = computed(() => {
   return `${h}:${m}:${sec}`
 })
 
-// --- ACCIONES ---
-
 const submit = async () => {
   formRef.value?.validate(async (errors) => {
     if (errors) return
 
     formValue.value.processing = true
     try {
+      // CONVERSIÓN CORRECTA A ISO UTC
       const dataToSave = {
         ...formValue.value,
-        start: startTimeTs.value ? formatISO(new Date(startTimeTs.value)) : null,
-        end: endTimeTs.value ? formatISO(new Date(endTimeTs.value)) : null,
+        // .toISOString() convierte el timestamp local a UTC 'Z' automáticamente
+        start: startTimeTs.value ? new Date(startTimeTs.value).toISOString() : null,
+        end: endTimeTs.value ? new Date(endTimeTs.value).toISOString() : null,
       }
 
       await pb.collection('time_entries').create(dataToSave)
