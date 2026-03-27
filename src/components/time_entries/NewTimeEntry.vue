@@ -1,136 +1,146 @@
 <template>
-  <div class="bg-slate-900 border border-slate-800/60 rounded-3xl p-6 md:p-8 shadow-md transition-all duration-300">
+  <div class="w-full mx-auto py-8 transition-all duration-500 flex flex-col items-center">
 
-    <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+    <div class="flex flex-col sm:flex-row justify-between items-center w-full gap-4 mb-12 px-2">
       
-      <div v-if="isTabataMode" class="flex items-center gap-4 w-full md:w-auto">
+      <div v-if="isTabataMode" class="flex items-center gap-3">
         <div 
-          class="flex-1 md:flex-none text-center px-4 py-2 rounded-xl transition-all duration-300 border"
+          class="px-4 py-2 rounded-2xl transition-all duration-500 border"
           :class="[
-            currentPhase === 'prepare' ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400' : 
-            currentPhase === 'work' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 
-            'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+            currentPhase === 'prepare' ? 'bg-[#74c69d]/10 border-[#74c69d]/20 text-[#74c69d]' : 
+            currentPhase === 'work' ? 'bg-[#e07a5f]/10 border-[#e07a5f]/20 text-[#e07a5f]' : 
+            'bg-[#52b788]/10 border-[#52b788]/20 text-[#52b788]'
           ]"
         >
-          <span class="text-xs font-bold tracking-wider uppercase">
-            {{ currentPhase === 'prepare' ? '¡Prepárate!' : currentPhase === 'work' ? 'Enfocado' : 'Descanso' }}
+          <span class="text-xs font-black tracking-widest uppercase flex items-center gap-2">
+            <span class="h-1.5 w-1.5 rounded-full bg-current animate-pulse"></span>
+            {{ currentPhase === 'prepare' ? 'Prepárate' : currentPhase === 'work' ? 'Trabajo' : 'Descanso' }}
           </span>
         </div>
       </div>
 
-      <div v-else class="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-full border border-slate-700/50">
-        <span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
-        <span class="text-xs font-medium text-slate-400 tracking-wide uppercase">Modo Continuo</span>
+      <div v-else class="flex items-center gap-2 bg-[#1e2824] px-4 py-2 rounded-full border border-white/[0.03]">
+        <span class="h-1.5 w-1.5 rounded-full bg-[#9db4a9]"></span>
+        <span class="text-xs font-bold text-[#9db4a9] tracking-wider uppercase">Cronómetro</span>
       </div>
 
-      <div class="flex items-center gap-4 text-xs text-slate-500">
-        <span class="flex items-center gap-1.5">
-          <span class="h-1.5 w-1.5 rounded-full" :class="isActive ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'"></span>
+      <div class="flex items-center gap-5 text-xs font-bold text-[#9db4a9] tracking-wider uppercase">
+        <span class="flex items-center gap-2">
+          <span class="h-1.5 w-1.5 rounded-full" :class="isActive ? 'bg-[#52b788]' : 'bg-[#2a3832]'"></span>
           Mantener encendido
         </span>
-        <span v-if="currentEntryId" class="flex items-center gap-1.5 text-cyan-400/80">
-          <span class="h-1.5 w-1.5 rounded-full bg-cyan-400"></span>
+        <span v-if="currentEntryId" class="flex items-center gap-2 text-[#52b788]">
+          <span class="h-1.5 w-1.5 rounded-full bg-[#52b788]"></span>
           Sincronizado
         </span>
       </div>
     </div>
 
-    <div class="flex flex-col items-center justify-center mb-10 py-4">
-      <div class="relative">
+    <div class="flex flex-col items-center justify-center mb-16 py-4 relative w-full">
+      
+      <div 
+        class="absolute inset-0 blur-[120px] opacity-25 transition-all duration-1000 rounded-full"
+        :class="[
+          !run ? 'bg-transparent' :
+          currentPhase === 'prepare' ? 'bg-[#74c69d]' :
+          currentPhase === 'work' ? 'bg-[#e07a5f]' : 'bg-[#52b788]'
+        ]"
+      ></div>
+
+      <div class="relative z-10 flex flex-col items-center">
         <span 
-          class="font-mono text-7xl md:text-8xl font-bold tracking-tighter transition-colors duration-300"
+          class="font-mono text-9xl md:text-[11rem] font-black tracking-tightest transition-all duration-500 drop-shadow-2xl"
           :class="[
-            !run ? 'text-slate-600' :
-            currentPhase === 'prepare' ? 'text-cyan-400' :
-            currentPhase === 'work' ? 'text-amber-400' : 'text-emerald-400'
+            !run ? 'text-[#2a3832]' :
+            currentPhase === 'prepare' ? 'text-[#74c69d]' :
+            currentPhase === 'work' ? 'text-[#e07a5f]' : 'text-[#52b788]'
           ]"
         >
           {{ isTabataMode ? formatCountdown(remainingTime) : formattedTotalTime }}
         </span>
+        
+        <span v-if="isTabataMode && run" class="font-mono text-sm font-bold text-[#9db4a9] mt-4 tracking-widest bg-[#1e2824]/60 px-4 py-1.5 rounded-full border border-white/[0.02]">
+          Total acumulado: {{ formattedTotalTime }}
+        </span>
       </div>
-      
-      <span v-if="isTabataMode && run" class="font-mono text-sm text-slate-500 mt-2">
-        Total acumulado: {{ formattedTotalTime }}
-      </span>
     </div>
 
     <n-form
-          ref="formRef"
-          :model="formValue"
-          :rules="rules"
-          size="large"
-          class="bg-slate-800/30 p-5 rounded-2xl border border-slate-800/50"
-        >
-          <div class="flex flex-nowrap items-center justify-between gap-4 w-full">
-            
-            <div class="flex-grow max-w-[250px]">
-              <n-form-item path="description" :show-label="false" class="!mb-0">
-                <n-input 
-                  v-model:value="formValue.description" 
-                  :disabled="run" 
-                  placeholder="¿En qué vas a trabajar?" 
-                  class="rounded-lg w-full"
-                  clearable
-                />
-              </n-form-item>
-            </div>
+      ref="formRef"
+      :model="formValue"
+      :rules="rules"
+      size="large"
+      class="w-full bg-[#1e2824]/80 p-4 rounded-3xl shadow-lg backdrop-blur-md"
+    >
+      <div class="flex flex-nowrap items-center justify-between gap-4">
+        
+        <div class="flex-grow max-w-[350px]">
+          <n-form-item path="description" :show-label="false" class="!mb-0">
+            <n-input 
+              v-model:value="formValue.description" 
+              :disabled="run" 
+              placeholder="¿En qué vas a trabajar?" 
+              class="rounded-xl h-12 flex items-center !bg-[#151d1a] border-none font-medium"
+              clearable
+            /> 
+          </n-form-item>
+        </div>
 
-            <div class="flex-shrink-0">
-              <n-form-item :show-label="false" class="!mb-0">
-                <AddProjectButton 
-                  :disabled="run"
-                  @select-project="(n) => formValue.project = n"
-                  @select-task="(t) => formValue.task = t" 
-                />
-              </n-form-item>
-            </div>
+        <div class="flex-shrink-0">
+          <n-form-item :show-label="false" class="!mb-0">
+            <AddProjectButton 
+              :disabled="run"
+              @select-project="(n) => formValue.project = n"
+              @select-task="(t) => formValue.task = t" 
+            />
+          </n-form-item>
+        </div>
 
-            <div class="flex-grow max-w-[140px]">
-              <n-form-item :show-label="false" class="!mb-0">
-                <AddTagSelect 
-                  :disabled="run"
-                  @select-tag="(n) => formValue.tag = n"
-                />
-              </n-form-item>
-            </div>
+        <div class="flex-grow max-w-[140px]">
+          <n-form-item :show-label="false" class="!mb-0">
+            <AddTagSelect 
+              :disabled="run"
+              @select-tag="(n) => formValue.tag = n"
+            />
+          </n-form-item>
+        </div>
 
-            <div class="flex flex-shrink-0 items-center gap-3">
-              <div class="flex items-center gap-1.5">
-                <n-form-item :show-label="false" class="!mb-0">
-                  <n-input-number v-model:value="formValue.work" :min="0" :disabled="run" class="w-16 rounded-lg" :show-button="false" placeholder="Min" />
-                </n-form-item>
-              </div>
+        <div class="flex flex-shrink-0 items-center gap-2">
+          <n-form-item :show-label="false" class="!mb-0">
+            <n-input-number v-model:value="formValue.work" :min="0" :disabled="run" class="w-14 rounded-lg !bg-transparent border-none text-center" :show-button="false" placeholder="Min" />
+          </n-form-item>
+          <n-form-item :show-label="false" class="!mb-0">
+            <n-input-number v-model:value="formValue.pause" :min="0" :disabled="run" class="w-14 rounded-lg !bg-transparent border-none text-center" :show-button="false" placeholder="Min" />
+          </n-form-item>
+        </div>
 
-              <div class="flex items-center gap-1.5">
-                <n-form-item :show-label="false" class="!mb-0">
-                  <n-input-number v-model:value="formValue.pause" :min="0" :disabled="run" class="w-16 rounded-lg" :show-button="false" placeholder="Min" />
-                </n-form-item>
-              </div>
-            </div>
+        <div class="flex-shrink-0 ">
+          <n-form-item :show-label="false">
+            <n-switch v-model:value="formValue.non_billable" :disabled="run">
+              <template #icon>💲</template>
+            </n-switch>
+          </n-form-item>
+        </div>
 
-            <div class="flex-shrink-0">
-              <n-form-item :show-label="false" class="!mb-0">
-                <n-switch v-model:value="formValue.non_billable" :disabled="run">
-                  <template #icon>💲</template>
-                </n-switch>
-              </n-form-item>
-            </div>
+        <div class="flex-shrink-0">
+          <n-form-item :show-label="false" >
+            <n-button 
+              @click="handleToggle" 
+              :loading="formValue.processing"
+              class="rounded-xl h-12 px-8 font-black text-sm tracking-widest uppercase transition-all duration-300 border-none"
+              :class="[
+                run 
+                ? 'bg-[#52b788] hover:bg-[#74c69d] text-[#151d1a] shadow-[#52b788]/20' 
+                : 'bg-[#e07a5f] hover:bg-[#f28b70] text-white shadow-[#e07a5f]/20'
+              ]"
+            >
+              {{ run ? 'Parar' : 'Empezar' }}
+            </n-button>
+          </n-form-item>
+        </div>
 
-            <div class="flex-shrink-0">
-              <n-form-item :show-label="false" class="!mb-0">
-                <n-button 
-                  @click="handleToggle" 
-                  :type="run ? 'error' : 'primary'"
-                  :loading="formValue.processing"
-                  class="rounded-xl px-6 font-semibold shadow-sm w-32 h-11 tracking-wide"
-                >
-                  {{ run ? 'Parar' : 'Empezar' }}
-                </n-button>
-              </n-form-item>
-            </div>
-
-          </div>
-        </n-form>
+      </div>
+    </n-form>
 
   </div>
 </template>

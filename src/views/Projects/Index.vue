@@ -7,27 +7,27 @@
 
     <div class="mt-4">
       
-      <div v-if="loading" class="flex flex-col items-center justify-center py-12 gap-3 text-slate-400">
-        <span class="h-6 w-6 rounded-full border-2 border-t-cyan-400 border-slate-700 animate-spin"></span>
-        <span class="text-sm font-medium tracking-wide">Cargando tus proyectos...</span>
+      <div v-if="loading" class="flex flex-col items-center justify-center py-16 gap-4 text-[#9db4a9]">
+        <span class="h-8 w-8 rounded-full border-3 border-t-[#52b788] border-[#2a3832] animate-spin"></span>
+        <span class="text-sm font-medium tracking-wide">Cultivando tus proyectos...</span>
       </div>
 
       <div v-else>
         
-        <div v-if="projects.length" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-if="projects.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           
           <div v-for="item in projects" :key="item.id">
-            <router-link :to="{ name: 'proyectos.show', params: { id: item.id } }">
-              <div class="group h-full p-6 bg-slate-900 hover:bg-slate-800/80 border border-slate-800/60 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-1 flex items-center justify-between">
+            <router-link :to="{ name: 'proyectos.show', params: { id: item.id } }" class="block h-full">
+              <div class="group h-full p-6 bg-[#1e2824] hover:bg-[#2a3832] border border-white/[0.03] rounded-3xl transition-all duration-300 shadow-lg shadow-black/10 hover:shadow-[#52b788]/5 hover:-translate-y-1.5 flex items-center justify-between">
                 
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-4">
                   <ColorCircle :color="item.color" size="md" /> 
-                  <span class="text-base font-semibold text-white group-hover:text-cyan-400 transition-colors duration-200">
+                  <span class="text-base font-bold text-white group-hover:text-[#74c69d] transition-colors duration-200">
                     {{ item.name }}
                   </span>
                 </div>
 
-                <span class="text-slate-500 group-hover:text-white transition-colors duration-200 transform group-hover:translate-x-1">
+                <span class="flex items-center justify-center h-8 w-8 rounded-full bg-[#2a3832] group-hover:bg-[#52b788] text-[#9db4a9] group-hover:text-[#151d1a] transition-all duration-300 transform group-hover:rotate-[-45deg]">
                   →
                 </span>
 
@@ -37,15 +37,21 @@
 
         </div>
 
-        <div v-else class="py-16 bg-slate-900/50 rounded-2xl border border-slate-800/50">
-          <n-empty description="Parece que no hay proyectos aún">
+        <div v-else class="py-16 bg-[#1e2824] rounded-3xl border border-white/[0.03] shadow-lg flex flex-col items-center justify-center">
+          <n-empty description="Aún no hay proyectos plantados">
+            <template #icon>
+              <span class="text-5xl">🌱</span>
+            </template>
             <template #extra>
-              <div class="flex flex-col items-center gap-4 mt-2">
-                <span class="text-sm text-slate-400">¡Creá tu primer proyecto para empezar a trackear!</span>
+              <div class="flex flex-col items-center gap-5 mt-4">
+                <span class="text-sm text-[#9db4a9] max-w-xs text-center leading-relaxed">
+                  Crea un proyecto para agrupar tus pomodoros y medir tu enfoque de forma visual.
+                </span>
+                
                 <n-button 
                   type="primary" 
                   ghost 
-                  class="rounded-lg font-medium"
+                  class="rounded-xl font-bold tracking-wide h-11 px-6 !border-[#52b788] !text-[#52b788] hover:!bg-[#52b788]/10"
                 >
                   Nuevo Proyecto
                 </n-button>
@@ -62,7 +68,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { RouterLink } from 'vue-router'
 import pb from '@/lib/pocketbase';
 
 import AppLayout from '@/layout/AppLayout.vue'

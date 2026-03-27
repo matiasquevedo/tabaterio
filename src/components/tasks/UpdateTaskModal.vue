@@ -1,12 +1,11 @@
 <template>
   <n-button 
-    type="warning" 
     text 
     @click="openModal"
-    class="opacity-70 hover:opacity-100 transition-opacity duration-200"
+    class="opacity-60 hover:opacity-100 hover:!text-[#52b788] transition-all duration-200"
   >
     <template #icon>
-      <n-icon size="18">
+      <n-icon size="19">
         <Pencil />
       </n-icon>
     </template>
@@ -16,9 +15,9 @@
     v-model:show="showModal" 
     close-on-esc
     preset="card"
-    title="✏️ Editar Tarea"
-    style="width: 600px" 
-    class="rounded-2xl bg-slate-900 border border-slate-800 shadow-xl"
+    title="🌱 Editar Tarea"
+    style="width: 550px" 
+    class="rounded-3xl bg-[#1e2824] border border-white/[0.04] shadow-2xl"
     size="huge"
     role="dialog"
     aria-modal="true"
@@ -33,13 +32,13 @@
         <n-input
           v-model:value="updateForm.name"
           placeholder="Ej: Maquetar vista de perfil"
-          class="rounded-lg"
+          class="rounded-xl h-11 flex items-center bg-[#2a3832]"
           clearable
         /> 
       </n-form-item>
 
       <n-form-item 
-        :label="`Rate Adicional ${dolars ? '(USD)' : ''}`" 
+        :label="`Tarifa Adicional ${dolars ? '(USD)' : ''}`" 
         :feedback="errors.task_rate"
         :validation-status="errors.task_rate ? 'error' : undefined"
       >
@@ -47,7 +46,7 @@
           v-model:value="updateForm.task_rate"
           :min="0"
           placeholder="0.00"
-          class="w-full rounded-lg"
+          class="w-full rounded-xl h-11 flex items-center bg-[#2a3832]"
           clearable 
         />
       </n-form-item>
@@ -55,10 +54,10 @@
     </form>
 
     <template #footer>
-      <div class="flex items-center justify-end gap-3 pt-2">
+      <div class="flex items-center justify-end gap-4 pt-2">
         <n-button 
           secondary 
-          class="rounded-lg" 
+          class="rounded-xl h-11 px-5 border border-white/[0.04] bg-[#2a3832] text-[#f4f9f4] hover:bg-[#364941]" 
           @click="showModal = false"
           :disabled="isProcessing"
         >
@@ -67,7 +66,7 @@
 
         <n-button 
           type="primary" 
-          class="rounded-lg px-6 font-semibold"
+          class="rounded-xl h-11 px-6 font-bold tracking-wide !bg-[#52b788] hover:!bg-[#74c69d] border-none text-[#151d1a] shadow-lg shadow-[#52b788]/10"
           :loading="isProcessing" 
           :disabled="isProcessing" 
           @click="submit" 

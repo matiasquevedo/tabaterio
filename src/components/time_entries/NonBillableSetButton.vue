@@ -6,7 +6,7 @@
 		:loading="loading"
 	>
 		<template #icon>
-			<n-icon v-if="billabe" size="24" color="#27272a">
+			<n-icon v-if="billabe" size="24" color="#52b78866">
 			  <CurrencyDollar />
 			</n-icon>
 			<n-icon v-else size="24" color="#00c950">

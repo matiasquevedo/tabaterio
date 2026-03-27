@@ -2,13 +2,15 @@
   <n-config-provider 
     :theme="darkTheme" 
     :theme-overrides="themeOverrides"
-    class="min-h-screen flex flex-col bg-slate-950 font-sans tracking-tight text-slate-100 selection:bg-cyan-500/30 selection:text-cyan-200"
+    class="min-h-screen flex flex-col bg-[#151d1a] font-sans tracking-tight text-[#f4f9f4] selection:bg-[#52b788]/30 selection:text-[#b7e4c7]"
   >
     <n-message-provider>
       
       <Nav />
 
-      <RouterView />
+      <main class="flex-1 flex flex-col">
+        <RouterView />
+      </main>
 
     </n-message-provider>
   </n-config-provider>
@@ -29,42 +31,46 @@ const store = useTimerStore()
 
 /**
  * 🎨 SOBREESCRITURA DE TEMAS GLOBAL (Naive UI)
- * Pisamos Card y Modal para que encajen con Slate-900 / Slate-950 de Tailwind
+ * Rediseño con la paleta de Naturaleza (Menta, Salvia, Arcilla y Musgo)
  */
 const themeOverrides: GlobalThemeOverrides = {
   common: {
-    primaryColor: '#2dd4bf', // Teal-400 (Cian/Esmeralda suave del sistema)
-    primaryColorHover: '#14b8a6',
-    primaryColorPressed: '#0f766e',
-    primaryColorSuppl: '#2dd4bf',
+    primaryColor: '#52b788', // Verde Salvia (Enfoque)
+    primaryColorHover: '#74c69d',
+    primaryColorPressed: '#2d6a4f',
+    primaryColorSuppl: '#52b788',
     
-    // Colores de fondo de selects, dropdowns, etc.
-    popoverColor: '#0f172a', // slate-900
-    cardColor: '#0f172a', // slate-900
-    modalColor: '#0f172a', // slate-900
+    popoverColor: '#1e2824', // bg-secondary (Verde bosque suave)
+    cardColor: '#1e2824', 
+    modalColor: '#1e2824',
     
-    // Bordes sutiles
-    borderColor: 'rgba(255, 255, 255, 0.08)'
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+    
+    borderRadius: '20px', // Bordes aún más juguetones y suaves
+    borderRadiusSmall: '10px'
   },
   Card: {
-    // Al usar preset="card" en n-modal, Naive UI lee ESTOS valores para el fondo del modal
-    color: '#0f172a', // slate-900
-    titleTextColor: '#ffffff',
-    textColor: '#cbd5e1', // slate-300
-    borderColor: 'rgba(255, 255, 255, 0.08)'
+    color: '#1e2824',
+    titleTextColor: '#f4f9f4',
+    textColor: '#9db4a9',
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+    borderRadius: '24px'
   },
   Modal: {
-    color: '#0f172a' // slate-900 (Fondo base del modal)
+    color: '#1e2824',
+    borderRadius: '28px'
   },
   Input: {
-    color: '#1e293b', // slate-800 para los inputs
-    colorFocus: '#1e293b',
-    textColor: '#ffffff',
-    border: '1px solid rgba(255, 255, 255, 0.08)'
+    color: '#2a3832', // bg-tertiary
+    colorFocus: '#2a3832',
+    textColor: '#f4f9f4',
+    border: '1px solid rgba(255, 255, 255, 0.04)',
+    borderRadius: '14px'
   },
   Dropdown: {
-    color: '#0f172a',
-    optionTextColor: '#e2e8f0'
+    color: '#1e2824',
+    optionTextColor: '#f4f9f4',
+    borderRadius: '14px'
   }
 }
 
@@ -74,8 +80,8 @@ const updateTitle = () => {
   
   const phaseNames: Record<string, string> = {
     prepare: '✨ Prepárate |',
-    work: '🔥 Enfocado |',
-    pause: '🌊 Descanso |',
+    work: '🌱 Enfocado |', // Emoji orgánico
+    pause: '🍂 Descanso |',  // Emoji orgánico
     stop: ''
   }
 

@@ -1,59 +1,60 @@
 <template>
   <div class="py-2">
     
-    <div v-if="loading" class="flex flex-col items-center justify-center py-12 gap-3 text-slate-400">
-      <span class="h-6 w-6 rounded-full border-2 border-t-cyan-400 border-slate-700 animate-spin"></span>
-      <span class="text-sm tracking-wide">Obteniendo tus registros...</span>
+    <div v-if="loading" class="flex flex-col items-center justify-center py-16 gap-4 text-[#9db4a9]">
+      <span class="h-8 w-8 rounded-full border-3 border-t-[#52b788] border-[#2a3832] animate-spin"></span>
+      <span class="text-sm font-medium tracking-wide">Obteniendo tus registros...</span>
     </div>
 
     <div v-else>
-      <div class="flex justify-between mb-6 items-center">
-        <div class="flex items-center gap-2">
-          <h2 class="text-xl font-bold text-white tracking-tight">Entradas de Tiempo</h2>
+      <div class="flex justify-between mb-8 items-center px-2">
+        <div class="flex items-center gap-3">
+          <h2 class="text-xl font-black text-white tracking-tight">Entradas de Tiempo</h2>
+          <span class="h-2 w-2 rounded-full bg-[#52b788] animate-pulse"></span>
         </div>
         
         <NewTimeEntryManualModal />
       </div>
 
       <div v-if="groupedEntries.length" class="overflow-x-auto">
-        <table class="min-w-full text-white text-left whitespace-nowrap">
+        <table class="min-w-full text-white text-left whitespace-nowrap border-separate border-spacing-y-2">
           <thead>
-            <tr class="text-xs font-semibold tracking-wider text-slate-400 uppercase">
-              <th class="pb-4 px-4">Hora / Fecha</th>
-              <th class="pb-4 px-4">Descripción</th>
-              <th class="pb-4 px-4">Duración Total</th>
-              <th class="pb-4 px-4">Facturable</th>
-              <th class="pb-4 px-4">Proyecto / Tarea</th>
-              <th class="pb-4 px-4 text-right">Acciones</th>
+            <tr class="text-xs font-bold tracking-wider text-[#9db4a9] uppercase">
+              <th class="pb-2 px-5">Hora / Fecha</th>
+              <th class="pb-2 px-5">Descripción</th>
+              <th class="pb-2 px-5">Duración Total</th>
+              <th class="pb-2 px-5">Cobrable</th>
+              <th class="pb-2 px-5">Proyecto</th>
+              <th class="pb-2 px-5 text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody class="text-sm divide-y divide-slate-800/50">
+          <tbody class="text-sm">
             <tr 
               v-for="(group, index) in groupedEntries" 
               :key="index" 
-              class="group hover:bg-slate-800/30 transition-colors duration-200"
+              class="group bg-[#1e2824]/50 hover:bg-[#2a3832] transition-all duration-300"
             >
-              <td class="py-4 px-4">
-                <div class="flex flex-col gap-0.5 font-mono">
-                  <span class="text-xs text-slate-400 capitalize">{{ formatDate(group.latestStart) }}</span>
-                  <span class="text-sm font-semibold text-white">{{ formatRange(group.earliestStart, group.latestEnd) }}</span>
+              <td class="py-5 px-5 rounded-l-2xl">
+                <div class="flex flex-col gap-1 font-mono">
+                  <span class="text-xs font-bold text-[#9db4a9] capitalize">{{ formatDate(group.latestStart) }}</span>
+                  <span class="text-sm font-bold text-white">{{ formatRange(group.earliestStart, group.latestEnd) }}</span>
                 </div>
               </td>
 
-              <td class="py-4 px-4">
-                <div class="flex flex-col gap-1.5">
-                  <div class="flex items-center gap-2">
-                    <span class="font-medium text-white group-hover:text-cyan-400 transition-colors duration-200">
+              <td class="py-5 px-5">
+                <div class="flex flex-col gap-2">
+                  <div class="flex items-center gap-3">
+                    <span class="font-bold text-white group-hover:text-[#74c69d] transition-colors duration-200">
                       {{ group.description || '(Sin descripción)' }}
                     </span>
                     
-                    <span v-if="group.count > 1" class="px-2 py-0.5 text-xs font-bold rounded-full bg-cyan-500/20 text-cyan-300">
-                      {{ group.count }}
+                    <span v-if="group.count > 1" class="px-2.5 py-1 text-xs font-black rounded-lg bg-[#52b788]/20 text-[#74c69d] border border-[#52b788]/20">
+                      ×{{ group.count }}
                     </span>
                   </div>
 
                   <div v-if="group.tag">
-                    <n-tag round :bordered="false" type="success" size="small" class="bg-emerald-500/10 text-emerald-400">
+                    <n-tag round :bordered="false" size="small" class="!bg-[#2a3832] !text-[#9db4a9] border border-white/[0.02]">
                       <template #icon>
                         <n-icon :component="Tag" />
                       </template>
@@ -63,36 +64,35 @@
                 </div>
               </td>
 
-              <td class="py-4 px-4 font-mono font-bold text-base text-emerald-400">
+              <td class="py-5 px-5 font-mono font-black text-base text-[#52b788]">
                 {{ formattedTime(group.totalDuration) }}
               </td>
 
-              <td class="py-4 px-4">
-                <div class="opacity-80 group-hover:opacity-100 transition-opacity">
+              <td class="py-5 px-5">
+                <div class="opacity-70 group-hover:opacity-100 transition-opacity">
                   <NonBillableSetButton :id="group.latestId" :nonBillable="group.non_billable" />
                 </div>
               </td>
 
-              <td class="py-4 px-4">
-                <div v-if="group.project" class="flex items-center gap-2">
+              <td class="py-5 px-5">
+                <div v-if="group.project" class="flex items-center gap-3">
                   <ColorCircle :color="group.project.color" size="sm" />
                   
                   <div class="flex flex-col">
                     <router-link 
                       :to="{ name: 'proyectos.show', params: { id: group.project.id } }" 
-                      class="text-sm font-medium text-white hover:text-cyan-400 transition-colors"
+                      class="text-sm font-bold text-white hover:text-[#52b788] transition-colors"
                     >
-                      {{ group.project.name }}<span v-if="group.task">:{{ group.task.name }}
-                    </span>
+                      {{ group.project.name }}:{{group.task?group.task.name:''}}
                     </router-link>
-                    
+
                   </div>
                 </div>
-                <span v-else class="text-xs italic text-slate-500">Sin proyecto</span>
+                <span v-else class="text-xs font-medium italic text-[#9db4a9]">Sin proyecto</span>
               </td>
 
-              <td class="py-4 px-4 text-right">
-                <div class="flex items-center justify-end gap-2 opacity-30 group-hover:opacity-100 transition-opacity duration-200">
+              <td class="py-5 px-5 text-right rounded-r-2xl">
+                <div class="flex items-center justify-end gap-3 opacity-30 group-hover:opacity-100 transition-all duration-200">
                   <CloneEntryTime :id="group.latestId" />
                   <DeleteTimeEntryModal :id="group.latestId" />
                 </div>
@@ -102,17 +102,17 @@
         </table>
       </div>
 
-      <div v-else class="py-16 flex flex-col items-center justify-center text-slate-400 bg-slate-900/30 rounded-2xl border border-slate-800/50">
-        <span class="text-5xl mb-4">⏱️</span>
-        <h3 class="text-base font-bold text-white mb-1">No hay entradas de tiempo registradas</h3>
-        <p class="text-sm text-slate-500 mb-6 max-w-sm text-center">Iniciá el temporizador para empezar a trackear tu actividad de trabajo o estudio.</p>
+      <div v-else class="py-16 flex flex-col items-center justify-center text-[#9db4a9] bg-[#151d1a]/50 rounded-3xl border border-white/[0.02]">
+        <span class="text-4xl mb-3">⏱️</span>
+        <h3 class="text-base font-bold text-white mb-1">Sin entradas de tiempo hoy</h3>
+        <p class="text-xs font-medium text-[#9db4a9] mb-6 max-w-sm text-center leading-relaxed">Arranca el cronómetro desde arriba para comenzar a medir tu tiempo.</p>
         
         <n-button 
           secondary 
-          class="rounded-lg tracking-wide" 
+          class="rounded-xl font-bold tracking-wide h-10 px-5 !bg-[#2a3832] border border-white/[0.03] text-[#f4f9f4] hover:!bg-[#364941]" 
           @click="loadData"
         >
-          Actualizar Tabla
+          Actualizar Historial
         </n-button>
       </div>
     </div>

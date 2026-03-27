@@ -1,23 +1,29 @@
 <template>
-  <div class="flex-1 w-full min-h-screen bg-slate-950 text-slate-100 selection:bg-cyan-500/30 selection:text-cyan-200">
+  <div class="flex-1 w-full min-h-screen bg-[#151d1a] text-[#f4f9f4] selection:bg-[#52b788]/30 selection:text-[#b7e4c7]">
     
-    <header v-if="title || $slots.header" class="pt-8 pb-4 md:pt-12 md:pb-6">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          
-          <h1 v-if="title" class="text-3xl md:text-4xl font-bold tracking-tight text-white">
-            {{ title }}
-          </h1>
+    <div class="h-24"></div>
 
-          <slot name="header" />
+    <header v-if="title || $slots.header" class="pt-6 pb-6">
+      <div class="max-w-5xl mx-auto px-6">
+        
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
+          <div>
+
+            <h1 v-if="title" class="text-4xl md:text-5xl font-black tracking-tight text-white">
+              {{ title }}
+            </h1>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <slot name="header" />
+          </div>
         </div>
 
       </div>
     </header>
 
-    <main class="pb-12 md:pb-16">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <main class="pb-24">
+      <div class="mx-auto px-12">
         <slot />
       </div>
     </main>

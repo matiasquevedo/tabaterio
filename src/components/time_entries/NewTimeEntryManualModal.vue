@@ -1,11 +1,11 @@
 <template>
   <n-button 
     secondary 
-    class="rounded-xl font-medium tracking-wide shadow-sm hover:shadow-md transition-all duration-300" 
+    class="rounded-xl font-bold tracking-wide h-10 px-5 !bg-[#2a3832] border border-white/[0.03] text-[#f4f9f4] hover:!bg-[#364941] shadow-sm hover:shadow-md transition-all duration-300" 
     @click="openModal"
   >
     <template #icon>
-      <span class="text-lg">+</span>
+      <span class="text-xl font-bold">+</span>
     </template>
     Entrada Manual
   </n-button>
@@ -13,10 +13,10 @@
   <n-modal 
     v-model:show="showModal" 
     preset="card"
-    title="📝 Nueva Entrada Manual"
-    style="width: 550px"
+    title="📝 Nueva Entrada de Tiempo"
+    style="width: 750px"
     size="huge"
-    class="rounded-2xl bg-slate-900 border border-slate-800 shadow-xl"
+    class="rounded-3xl bg-[#1e2824] border border-white/[0.04] shadow-2xl"
   >
     <n-form
       ref="formRef"
@@ -28,8 +28,8 @@
       <n-form-item label="¿Qué estuviste haciendo?" path="description">
         <n-input 
           v-model:value="formValue.description" 
-          placeholder="Ej: Reunión de diseño de interfaz" 
-          class="rounded-lg"
+          placeholder="Ej: Reunión de diseño de interfaz o Planificación" 
+          class="rounded-xl h-11 flex items-center bg-[#2a3832] border-none font-medium"
           clearable
         />
       </n-form-item>
@@ -39,12 +39,12 @@
           <n-input 
             v-model:value="startTimeRaw" 
             placeholder="08:30"
-            class="rounded-lg"
+            class="rounded-xl h-11 flex items-center bg-[#2a3832] border-none font-medium"
             @blur="formatAndProcessTime('start')"
             @keyup.enter="formatAndProcessTime('start')"
           >
             <template #prefix>
-              <span class="text-slate-400 text-xs font-mono mr-1">HH:MM</span>
+              <span class="text-[#9db4a9] text-xs font-mono mr-1">HH:MM</span>
             </template>
           </n-input>
         </n-form-item>
@@ -53,25 +53,25 @@
           <n-input 
             v-model:value="endTimeRaw" 
             placeholder="12:00"
-            class="rounded-lg"
+            class="rounded-xl h-11 flex items-center bg-[#2a3832] border-none font-medium"
             @blur="formatAndProcessTime('end')"
             @keyup.enter="formatAndProcessTime('end')"
           >
             <template #prefix>
-              <span class="text-slate-400 text-xs font-mono mr-1">HH:MM</span>
+              <span class="text-[#9db4a9] text-xs font-mono mr-1">HH:MM</span>
             </template>
           </n-input>
         </n-form-item>
       </div>
 
-      <div class="flex items-center justify-between bg-slate-800/50 p-5 rounded-2xl border border-slate-800/60 shadow-inner">
-        <div class="flex flex-col gap-0.5">
-          <span class="text-slate-400 text-xs font-semibold tracking-wider uppercase">Duración Calculada</span>
-          <span class="text-slate-500 text-xs">Ajuste automático de rango</span>
+      <div class="flex items-center justify-between bg-[#151d1a]/50 p-5 rounded-2xl border border-white/[0.02] shadow-inner">
+        <div class="flex flex-col gap-1">
+          <span class="text-[#f4f9f4] text-xs font-bold tracking-wider uppercase">Duración Calculada</span>
+          <span class="text-[#9db4a9] text-xs">Ajuste automático de rango</span>
         </div>
         <div 
-          class="text-3xl font-mono font-bold transition-colors duration-300"
-          :class="formValue.duration > 0 ? 'text-emerald-400' : 'text-slate-600'"
+          class="text-3xl font-mono font-black transition-colors duration-300"
+          :class="formValue.duration > 0 ? 'text-[#52b788]' : 'text-[#2a3832]'"
         >
           {{ formattedTotalTime }}
         </div>
@@ -102,10 +102,10 @@
     </n-form>
 
     <template #footer>
-      <div class="flex justify-end items-center gap-3 pt-2">
+      <div class="flex justify-end items-center gap-4 pt-2">
         <n-button 
           secondary 
-          class="rounded-lg" 
+          class="rounded-xl h-11 px-5 border border-white/[0.04] bg-[#2a3832] text-[#f4f9f4] hover:bg-[#364941]" 
           @click="showModal = false"
           :disabled="formValue.processing"
         >
@@ -114,7 +114,7 @@
         
         <n-button 
           type="primary" 
-          class="rounded-lg px-6 font-semibold"
+          class="rounded-xl h-11 px-6 font-bold tracking-wide !bg-[#52b788] hover:!bg-[#74c69d] border-none text-[#151d1a] shadow-lg shadow-[#52b788]/10"
           :loading="formValue.processing" 
           :disabled="formValue.duration <= 0"
           @click="submit"

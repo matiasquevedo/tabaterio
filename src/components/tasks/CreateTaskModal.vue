@@ -1,11 +1,11 @@
 <template>
   <n-button 
     type="primary" 
-    class="rounded-xl font-medium tracking-wide shadow-sm hover:shadow-md transition-all duration-300"
+    class="rounded-2xl font-bold tracking-wide shadow-lg shadow-[#52b788]/20 hover:shadow-[#52b788]/30 transition-all duration-300 h-11 px-5 !bg-[#52b788] hover:!bg-[#74c69d] border-none"
     @click="openModal"
   >
     <template #icon>
-      <span class="text-lg">+</span>
+      <span class="text-xl font-bold">+</span>
     </template>
     Nueva Tarea
   </n-button>
@@ -14,9 +14,9 @@
     v-model:show="showModal" 
     close-on-esc
     preset="card"
-    title="📌 Crear Nueva Tarea"
-    style="width: 600px" 
-    class="rounded-2xl bg-slate-900 border border-slate-800 shadow-xl"
+    title="🌱 Nueva Tarea"
+    style="width: 550px" 
+    class="rounded-3xl bg-[#1e2824] border border-white/[0.04] shadow-2xl"
     size="huge"
     role="dialog"
     aria-modal="true"
@@ -30,14 +30,14 @@
       >
         <n-input
           v-model:value="createForm.name"
-          placeholder="Ej: Maquetar vista de perfil"
-          class="rounded-lg"
+          placeholder="Ej: Maquetar vista de perfil o Leer capítulo 3"
+          class="rounded-xl h-11 flex items-center bg-[#2a3832]"
           clearable
         /> 
       </n-form-item>
 
       <n-form-item 
-        :label="`Rate Adicional ${dolars ? '(USD)' : ''}`" 
+        :label="`Tarifa Adicional ${dolars ? '(USD)' : ''}`" 
         :feedback="errors.task_rate"
         :validation-status="errors.task_rate ? 'error' : undefined"
       >
@@ -45,7 +45,7 @@
           v-model:value="createForm.task_rate"
           :min="0"
           placeholder="0.00"
-          class="w-full rounded-lg"
+          class="w-full rounded-xl h-11 flex items-center bg-[#2a3832]"
           clearable 
         />
       </n-form-item>
@@ -53,10 +53,10 @@
     </form>
 
     <template #footer>
-      <div class="flex items-center justify-end gap-3 pt-2">
+      <div class="flex items-center justify-end gap-4 pt-2">
         <n-button 
           secondary 
-          class="rounded-lg" 
+          class="rounded-xl h-11 px-5 border border-white/[0.04] bg-[#2a3832] text-[#f4f9f4] hover:bg-[#364941]" 
           @click="showModal = false"
           :disabled="createForm.processing"
         >
@@ -65,13 +65,13 @@
 
         <n-button 
           type="primary" 
-          class="rounded-lg px-6 font-semibold"
+          class="rounded-xl h-11 px-6 font-bold tracking-wide !bg-[#52b788] hover:!bg-[#74c69d] border-none text-[#151d1a] shadow-lg shadow-[#52b788]/10"
           :loading="createForm.processing" 
           :disabled="createForm.processing" 
           @click="submit" 
           attr-type="submit"
         >
-          Crear Tarea
+          Guardar Tarea
         </n-button>
       </div>
     </template>

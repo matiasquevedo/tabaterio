@@ -1,11 +1,11 @@
 <template>
   <n-button 
     type="primary" 
-    class="rounded-xl font-medium tracking-wide shadow-sm hover:shadow-md transition-all duration-300"
+    class="rounded-2xl font-bold tracking-wide shadow-lg shadow-[#52b788]/20 hover:shadow-[#52b788]/30 transition-all duration-300 h-11 px-5 !bg-[#52b788] hover:!bg-[#74c69d] border-none"
     @click="openModal"
   >
     <template #icon>
-      <span class="text-lg">+</span>
+      <span class="text-xl font-bold">+</span>
     </template>
     Nuevo Proyecto
   </n-button>
@@ -14,14 +14,14 @@
     v-model:show="showModal" 
     close-on-esc
     preset="card"
-    title="🚀 Crear Nuevo Proyecto"
-    style="width: 600px" 
-    class="rounded-2xl bg-slate-900 border border-slate-800 shadow-xl"
+    title="🌱  Nuevo Proyecto"
+    style="width: 550px" 
+    class="rounded-3xl bg-[#1e2824] border border-white/[0.04] shadow-2xl"
     size="huge"
     role="dialog"
     aria-modal="true"
   >   
-    <form @submit.prevent="submit" class="space-y-2">
+    <form @submit.prevent="submit" class="space-y-4">
 
       <n-form-item 
         label="Nombre del proyecto" 
@@ -30,8 +30,8 @@
       >
         <n-input
           v-model:value="createForm.name"
-          placeholder="Ej: Rediseño de Plataforma"
-          class="rounded-lg"
+          placeholder="Ej: Rediseño de Plataforma o Estudio de Historia"
+          class="rounded-xl h-11 flex items-center bg-[#2a3832]"
           clearable
         /> 
       </n-form-item>
@@ -47,7 +47,7 @@
               v-model:value="createForm.rate"
               :min="0"
               placeholder="0.00"
-              class="w-full rounded-lg"
+              class="w-full rounded-xl h-11 flex items-center bg-[#2a3832]"
               clearable 
             />
           </n-form-item>
@@ -73,7 +73,7 @@
           v-model:value="createForm.estimate"
           :min="0"
           placeholder="0"
-          class="w-full rounded-lg"
+          class="w-full rounded-xl h-11 flex items-center bg-[#2a3832]"
           clearable 
         />
       </n-form-item>
@@ -84,7 +84,7 @@
             <n-color-picker
               v-model:value="createForm.color"
               :swatches="swatches"
-              class="rounded-lg"
+              class="rounded-xl bg-[#2a3832]"
             />
           </n-form-item>
         </div>
@@ -93,11 +93,11 @@
           <n-button 
             @click="change_color" 
             secondary 
-            class="w-full rounded-lg h-[34px] flex items-center justify-center"
+            class="w-full rounded-xl h-11 flex items-center justify-center bg-[#2a3832] border border-white/[0.04] hover:bg-[#364941]"
             title="Generar color aleatorio"
           >
             <template #icon>
-              <n-icon size="18" class="text-slate-300">
+              <n-icon size="18" class="text-[#9db4a9] group-hover:text-white">
                 <ArrowsShuffle />
               </n-icon>
             </template>
@@ -108,10 +108,10 @@
     </form>
 
     <template #footer>
-      <div class="flex items-center justify-end gap-3 pt-2">
+      <div class="flex items-center justify-end gap-4 pt-2">
         <n-button 
           secondary 
-          class="rounded-lg" 
+          class="rounded-xl h-11 px-5 border border-white/[0.04] bg-[#2a3832] text-[#f4f9f4] hover:bg-[#364941]" 
           @click="showModal = false"
           :disabled="createForm.processing"
         >
@@ -120,13 +120,13 @@
 
         <n-button 
           type="primary" 
-          class="rounded-lg px-6 font-semibold"
+          class="rounded-xl h-11 px-6 font-bold tracking-wide !bg-[#52b788] hover:!bg-[#74c69d] border-none text-[#151d1a] shadow-lg shadow-[#52b788]/10"
           :loading="createForm.processing" 
           :disabled="createForm.processing" 
           @click="submit" 
           attr-type="submit"
         >
-          Crear Proyecto
+          Comenzar Proyecto
         </n-button>
       </div>
     </template>
@@ -180,16 +180,14 @@ const submit = async () => {
   errors.value = {}; 
 
   try {
-    // Desestructuramos para no enviar 'processing' a PocketBase
     const { processing, ...payload } = createForm.value;
     
     await pb.collection('projects').create(payload);
     
-    // Limpieza amigable
     createForm.value.name = '';
     createForm.value.rate = 40;
     createForm.value.estimate = 0;
-    change_color(); // Reiniciar a un color nuevo
+    change_color(); 
     
     showModal.value = false; 
   } catch (error: any) {

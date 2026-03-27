@@ -1,37 +1,44 @@
 <template>
   <AppLayout>
-    
-    <template #header>
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between w-full gap-4">
+
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-5 mt-10 mx-12">
+      
+      <div class="flex items-center gap-4">
         
-        <div class="flex items-center gap-3">
-          <Color :color="project.color" size="lg" />
-          <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-white flex items-center gap-2">
+        <Color :color="project.color" size="lg" />
+        <div>
+          <h1 class="text-3xl md:text-4xl font-black tracking-tight text-white flex items-center gap-3">
             {{ project.name }}
-            <span class="text-sm font-medium tracking-normal text-slate-400 bg-slate-800/50 px-2.5 py-1 rounded-md">
+            <span class="text-xs font-bold tracking-normal text-[#9db4a9] bg-[#2a3832] px-3 py-1.5 rounded-xl border border-white/[0.03]">
               {{ tasks.length }} {{ tasks.length === 1 ? 'tarea' : 'tareas' }}
             </span>
           </h1>
         </div>
+      </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-xl px-5 py-3 shadow-sm flex items-center gap-3">
-          <span class="text-xs font-semibold tracking-wider text-slate-400 uppercase">Tiempo Total:</span>
-          <span class="font-mono text-xl font-bold text-cyan-400 tracking-tight">
+      <div class="bg-[#1e2824] border border-white/[0.04] rounded-2xl px-6 py-4 shadow-lg flex items-center gap-4">
+        <div class="p-2 bg-[#52b788]/10 rounded-xl">
+          <span class="text-xl">⏱️</span>
+        </div>
+        <div>
+          <span class="text-xs font-bold tracking-wider text-[#9db4a9] uppercase block mb-0.5">Tiempo Total</span>
+          <span class="font-mono text-2xl font-black text-[#52b788] tracking-tight">
             {{ formattedTime(sumTime) }}
           </span>
         </div>
-
       </div>
-    </template>
 
-    <div class="space-y-12 mt-4">
+    </div>
 
-      <section class="bg-slate-900/50 border border-slate-800/60 rounded-2xl p-6 md:p-8 shadow-sm">
+
+    <div class="space-y-10 mt-6">
+
+      <section class="bg-[#1e2824] border border-white/[0.03] rounded-3xl p-6 md:p-8 shadow-md">
         
-        <div class="flex justify-between items-center mb-6">
-          <div class="flex items-center gap-2">
-            <h2 class="text-xl font-bold text-white tracking-tight">Tareas</h2>
-            <span class="h-1.5 w-1.5 rounded-full bg-cyan-400"></span>
+        <div class="flex justify-between items-center mb-8">
+          <div class="flex items-center gap-3">
+            <h2 class="text-xl font-bold text-white tracking-tight">Tareas del Proyecto</h2>
+            <span class="h-2 w-2 rounded-full bg-[#52b788] animate-pulse"></span>
           </div>
           
           <div v-if="!loading && project.id">
@@ -39,57 +46,69 @@
           </div>
         </div>
 
-        <div v-if="loading" class="flex flex-col items-center justify-center py-12 gap-3 text-slate-400">
-          <span class="h-6 w-6 rounded-full border-2 border-t-cyan-400 border-slate-700 animate-spin"></span>
-          <span>Cargando tareas...</span>
+        <div v-if="loading" class="flex flex-col items-center justify-center py-16 gap-4 text-[#9db4a9]">
+          <span class="h-8 w-8 rounded-full border-3 border-t-[#52b788] border-[#2a3832] animate-spin"></span>
+          <span class="text-sm font-medium">Buscando tus tareas...</span>
         </div>
 
-        <div v-else class="overflow-x-auto">
-          <table v-if="tasks.length" class="min-w-full text-white text-left whitespace-nowrap">
-            <thead>
-              <tr class="text-sm font-semibold text-slate-400">
-                <th class="pb-4 px-4">Tarea</th>
-                <th class="pb-4 px-4">Tarifa Adicional</th>
-                <th class="pb-4 px-4">Total {{ project.in_dolars ? '(USD)' : '' }}</th>
-                <th class="pb-4 px-4 text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody class="text-sm divide-y divide-slate-800/50">
-              <tr 
-                v-for="task in tasks" 
-                :key="task.id" 
-                class="group hover:bg-slate-800/40 transition-colors duration-200"
-              >
-                <td class="py-4 px-4 font-medium text-white group-hover:text-cyan-400 transition-colors duration-200">
-                  {{ task.name }}
-                </td>
-                <td class="py-4 px-4 text-slate-300 font-mono">
-                  ${{ task.task_rate }}
-                </td>
-                <td class="py-4 px-4 text-slate-300 font-mono">
-                  ${{ (task.task_rate || 0) + (project.rate || 0) }}
-                </td>
-                <td class="py-4 px-4 text-right">
-                  <div class="flex items-center justify-end gap-2 opacity-80 group-hover:opacity-100 transition-opacity duration-200">
-                    <UpdateTaskModal :task="task" :project="project.id" :dolars="project.in_dolars" />
-                    <DeleteTaskModal :id="task.id" :name="task.name" :project="project.id" />
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div v-else>
+          <div v-if="tasks.length" class="overflow-x-auto">
+            <table class="min-w-full text-white text-left whitespace-nowrap">
+              <thead>
+                <tr class="text-xs font-bold tracking-wider text-[#9db4a9] uppercase">
+                  <th class="pb-4 px-4">Tarea</th>
+                  <th class="pb-4 px-4">Tarifa Adicional</th>
+                  <th class="pb-4 px-4">Rate Total {{ project.in_dolars ? '(USD)' : '' }}</th>
+                  <th class="pb-4 px-4 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="text-sm">
+                <tr class="h-2"></tr>
+                
+                <tr 
+                  v-for="task in tasks" 
+                  :key="task.id" 
+                  class="group bg-[#151d1a]/50 hover:bg-[#2a3832] transition-all duration-300"
+                >
+                  <td class="py-5 px-4 font-bold text-white group-hover:text-[#74c69d] transition-colors duration-200 rounded-l-2xl">
+                    {{ task.name }}
+                  </td>
+                  <td class="py-5 px-4 text-[#9db4a9] font-mono font-medium">
+                    ${{ task.task_rate }}
+                  </td>
+                  <td class="py-5 px-4 text-[#f4f9f4] font-mono font-bold">
+                    ${{ (task.task_rate || 0) + (project.rate || 0) }}
+                  </td>
+                  <td class="py-5 px-4 text-right rounded-r-2xl">
+                    <div class="flex items-center justify-end gap-3 opacity-60 group-hover:opacity-100 transition-opacity duration-200">
+                      <UpdateTaskModal :task="task" :project="project.id" :dolars="project.in_dolars" />
+                      <DeleteTaskModal :id="task.id" :name="task.name" :project="project.id" />
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-          <div v-else class="py-12 flex flex-col items-center justify-center text-slate-400 gap-2">
-            <span class="text-sm">No hay tareas registradas en este proyecto.</span>
-            <span class="text-xs text-slate-500">¡Añadí la primera para empezar!</span>
+          <div v-else class="py-16 flex flex-col items-center justify-center text-[#9db4a9] gap-4 bg-[#151d1a]/40 rounded-2xl border border-white/[0.02]">
+            <span class="text-4xl">🍃</span>
+            <div class="flex flex-col items-center gap-1 text-center">
+              <span class="text-sm font-bold text-white">No hay tareas plantadas aún.</span>
+              <span class="text-xs">¡Crea tu primera tarea para empezar a medir tu tiempo!</span>
+            </div>
           </div>
         </div>
       </section>
 
-      <section class="border border-red-500/20 bg-red-500/5 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div>
-          <h3 class="text-lg font-bold text-red-400">Zona de peligro</h3>
-          <p class="text-sm text-slate-400 mt-1">Si borrás este proyecto, perderás las tareas asociadas y los tiempos guardados.</p>
+      <section class="border border-[#e07a5f]/20 bg-[#e07a5f]/5 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-6 mx-12">
+        <div class="flex items-start gap-4">
+          <span class="text-2xl mt-1">🍂</span>
+          <div>
+            <h3 class="text-lg font-bold text-[#e07a5f]">Zona de resguardo</h3>
+            <p class="text-sm text-[#9db4a9] mt-1 max-w-md">
+              Si borras este proyecto se perderá su historial de tareas y métricas de tiempo de forma permanente.
+            </p>
+          </div>
         </div>
         <DeleteProjectModal :id="project.id" :name="project.name" />
       </section>

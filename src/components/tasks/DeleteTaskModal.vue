@@ -1,12 +1,11 @@
 <template>
   <n-button 
-    type="error" 
     text 
     @click="openModal"
-    class="opacity-70 hover:opacity-100 transition-opacity duration-200"
+    class="opacity-60 hover:opacity-100 hover:!text-[#e07a5f] transition-all duration-200"
   >
     <template #icon>
-      <n-icon size="18">
+      <n-icon size="19">
         <Trash />
       </n-icon>
     </template>
@@ -16,42 +15,42 @@
     v-model:show="showModal" 
     close-on-esc
     preset="card"
-    title="⚠️ Eliminar Tarea"
+    title="🍂 Descartar Tarea"
     style="width: 500px" 
-    class="rounded-2xl bg-slate-900 border border-slate-800 shadow-xl"
+    class="rounded-3xl bg-[#1e2824] border border-white/[0.04] shadow-2xl"
     size="huge"
     role="dialog"
     aria-modal="true"
   >   
-    <div class="py-2 flex flex-col gap-2">
-      <p class="text-base text-slate-100">
-        ¿Estás seguro de que querés eliminar la tarea <span class="font-bold text-white">"{{ name }}"</span>?
+    <div class="py-2 flex flex-col gap-3">
+      <p class="text-base text-[#f4f9f4]">
+        ¿Estás seguro de que quieres quitar la tarea <span class="font-bold text-white">"{{ name }}"</span>?
       </p>
-      <p class="text-sm text-slate-400">
-        Esta acción no se puede deshacer y se perderá el registro de la tarea.
+      <p class="text-sm text-[#9db4a9] leading-relaxed">
+        Esta acción es permanente y se perderá el registro de la tarea en este proyecto.
       </p>
     </div>
 
     <template #footer>
-      <div class="flex items-center justify-end gap-3 pt-2">
+      <div class="flex items-center justify-end gap-4 pt-2">
         <n-button 
           secondary 
-          class="rounded-lg" 
+          class="rounded-xl h-11 px-5 border border-white/[0.04] bg-[#2a3832] text-[#f4f9f4] hover:bg-[#364941]" 
           @click="showModal = false"
           :disabled="isProcessing"
         >
-          Cancelar
+          Conservar
         </n-button>
 
         <n-button 
           type="error" 
-          class="rounded-lg px-6 font-semibold"
+          class="rounded-xl h-11 px-6 font-bold tracking-wide !bg-[#e07a5f] hover:!bg-[#f28b70] border-none text-white shadow-lg shadow-[#e07a5f]/10"
           :loading="isProcessing" 
           :disabled="isProcessing" 
           @click="submit" 
           attr-type="submit"
         >
-          Eliminar Tarea
+          Quitar Tarea
         </n-button>
       </div>
     </template>
