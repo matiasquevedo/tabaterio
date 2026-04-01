@@ -6,7 +6,6 @@
   >
     <n-message-provider>
       
-      <Nav />
 
       <main class="flex-1 flex flex-col">
         <RouterView />
@@ -16,12 +15,13 @@
   </n-config-provider>
 
   <LoFiRadio />
+
+
 </template>
 
 <script setup lang="ts">
 import { watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
-import Nav from './layout/Nav.vue'
 import LoFiRadio from '@/components/LoFiRadio.vue'
 import { useTimerStore } from '@/stores/timer'
 import { NConfigProvider, NMessageProvider, darkTheme, type GlobalThemeOverrides } from 'naive-ui'

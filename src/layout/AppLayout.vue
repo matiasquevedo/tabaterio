@@ -1,4 +1,6 @@
 <template>
+
+  <Nav />
   <div class="flex-1 w-full min-h-screen bg-[#151d1a] text-[#f4f9f4] selection:bg-[#52b788]/30 selection:text-[#b7e4c7]">
     
     <div class="h-24"></div>
@@ -32,6 +34,9 @@
 </template>
 
 <script setup lang="ts">
+      
+import Nav from '@/layout/Nav.vue'
+
 defineProps({
   title: {
     type: String,
