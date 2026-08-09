@@ -48,7 +48,7 @@
 
         <div v-if="isLogin" class="flex items-center gap-3">
           <div class="hidden md:flex flex-col items-end">
-            <span class="text-[11px] font-black text-white leading-none tracking-wider">{{ user.name }}</span>
+            <span class="text-[11px] font-black text-white leading-none tracking-wider">{{ user.username }}</span>
           </div>
           
           <n-button 

@@ -49,12 +49,17 @@
                     </span>
                   </div>
                   <div v-if="group.tag">
-                    <n-tag round :bordered="false" size="small" class="!bg-[#2a3832] !text-[#9db4a9] border border-white/[0.02]">
-                      <template #icon>
-                        <n-icon :component="Tag" />
-                      </template>
-                      {{ group.tag.name }}
-                    </n-tag>
+                    <router-link 
+                      :to="{ name: 'tags.show', params: { id: group.tag.id } }" 
+                      class="text-sm font-bold text-white hover:text-[#52b788] transition-colors"
+                    >
+                      <n-tag round :bordered="false" size="small" class="!bg-[#2a3832] !text-[#9db4a9] border border-white/[0.02] point">
+                        <template #icon>
+                          <n-icon :component="Tag" />
+                        </template>
+                        {{ group.tag.name }}
+                      </n-tag>
+                    </router-link>
                   </div>
                 </div>
               </td>
@@ -72,7 +77,7 @@
                     :to="{ name: 'proyectos.show', params: { id: group.project.id } }" 
                     class="text-sm font-bold text-white hover:text-[#52b788] transition-colors"
                   >
-                    {{ group.project.name }}:{{group.task?group.task.name:''}}
+                    {{ group.project.name }}{{group.task?`:${group.task.name}`:''}}
                   </router-link>
                 </div>
               </td>

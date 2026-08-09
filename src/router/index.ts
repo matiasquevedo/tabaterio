@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import NotFound from '../views/NotFound.vue'
 import ProjectsIndex from '../views/Projects/Index.vue'
 import ProjectsShow from '../views/Projects/Show.vue'
+import TagsShow from '../views/Tags/Show.vue'
 import Login from '../views/Auth/Login.vue'
 
 import { useAuthStore } from '@/stores/auth'
@@ -43,6 +44,13 @@ const router = createRouter({
       component: ProjectsShow,
       props: true,
       meta: { title: 'Ver Proyecto', requiresAuth: true }
+    },
+    {
+      path: '/tag/:id',
+      name: 'tags.show',
+      component: TagsShow,
+      props: true,
+      meta: { title: 'Tag', requiresAuth: true }
     },
     {
       path: '/about',
