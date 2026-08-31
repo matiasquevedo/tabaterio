@@ -356,7 +356,6 @@ const updateEntryInDB = async () => {
 
 const resetForm = () => {
   formValue.value.duration = 0
-  formValue.value.description = ''
   currentEntryId.value = null
   autoSaveCounter.value = 0
   remainingTime.value = 0

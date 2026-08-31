@@ -1,8 +1,3 @@
-Aquí tienes el código completo de la vista de detalle de Etiqueta (`TagShowView.vue` / `TagsShow.vue`) rediseñado.
-
-Conserva la estética de **cápsulas oscuras con efecto glassmorphism**, la tipografía de alto contraste con detalles en verde esmeralda, badges integrados para fechas/duración y la misma estructura visual limpia de la tabla.
-
-```vue
 <template>
   <AppLayout>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

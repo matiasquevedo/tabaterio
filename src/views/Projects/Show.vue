@@ -52,6 +52,7 @@
         </div>
 
         <div v-else>
+
           <div v-if="tasks.length" class="overflow-x-auto">
             <table class="min-w-full text-white text-left whitespace-nowrap">
               <thead>
@@ -100,6 +101,98 @@
         </div>
       </section>
 
+      <!-- Sección Tabla de Entradas -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between px-2">
+          <div>
+            <h2 class="text-xl font-black text-white tracking-tight">Entradas de Tiempo</h2>
+            <p class="text-[11px] font-bold text-[#9db4a9]/60 uppercase tracking-wider mt-0.5">
+              Registros asociados a esta etiqueta ({{ entries.length }})
+            </p>
+          </div>
+        </div>
+
+        <!-- Tabla de Entradas -->
+        <div v-if="entries.length" class="overflow-x-auto pb-6">
+          <table class="min-w-full text-white text-left whitespace-nowrap border-separate border-spacing-y-3">
+            <thead>
+              <tr class="text-[10px] font-black tracking-[0.15em] text-[#9db4a9]/50 uppercase">
+                <th class="pb-2 px-6">Descripción</th>
+                <th class="pb-2 px-6">Fecha / Horario</th>
+                <th class="pb-2 px-6 text-center">Duración</th>
+                <th class="pb-2 px-6 text-center">Cobro</th>
+                <th class="pb-2 px-6 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="text-sm">
+              <tr 
+                v-for="entry in entries" 
+                :key="entry.id" 
+                class="group bg-[#1e2824]/40 hover:bg-[#1e2824]/80 border border-white/[0.02] transition-all duration-300 backdrop-blur-sm"
+              >
+                <!-- Tarea / Descripción -->
+                <td class="py-4 px-6 rounded-l-3xl border-y border-l border-white/[0.03]">
+                  <div class="flex flex-col gap-0.5">
+                    <span class="font-bold text-white group-hover:text-[#52b788] transition-colors duration-300">
+                      {{ entry.description || 'Sin descripción' }}
+                    </span>
+                    <span v-if="entry.expand?.project" class="text-[10px] font-bold text-[#9db4a9]/60 uppercase tracking-wider">
+
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Fecha / Rango Horario -->
+                <td class="py-4 px-6 border-y border-white/[0.03]">
+                  <div class="flex flex-col gap-0.5 font-mono">
+                    <span class="text-[10px] font-black text-[#52b788] uppercase tracking-tighter">
+                        {{ formatDate(entry.start) }}
+                    </span>
+                    <span class="text-xs font-bold text-white/80">
+                        {{ formatRange(entry.start, entry.end) }}
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Duración -->
+                <td class="py-4 px-6 text-center border-y border-white/[0.03]">
+                  <span class="font-mono font-black text-base text-[#52b788] bg-[#52b788]/10 px-3 py-1 rounded-xl border border-[#52b788]/20">
+                    {{ formattedTime(entry.duration) }}
+                  </span>
+                </td>
+
+                <!-- Estado Facturable / Cobrable -->
+                <td class="py-4 px-6 text-center border-y border-white/[0.03]">
+                  <span 
+                    class="inline-block px-2.5 py-1 text-[10px] font-black rounded-lg uppercase tracking-wider border"
+                    :class="entry.non_billable ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-[#52b788]/10 text-[#52b788] border-[#52b788]/20'"
+                  >
+                    {{ entry.non_billable ? 'No Cobrable' : 'Cobrable' }}
+                  </span>
+                </td>
+
+                <!-- Acciones -->
+                <td class="py-4 px-6 text-right rounded-r-3xl border-y border-r border-white/[0.03]">
+                  <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                    <CloneEntryTime :id="entry.id" />
+                    <DeleteTimeEntryModal :id="entry.id" />
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else class="py-24 flex flex-col items-center justify-center text-[#9db4a9] bg-[#1e2824]/20 rounded-[3rem] border-2 border-dashed border-white/[0.03]">
+          <div class="h-20 w-20 bg-[#2a3832]/50 rounded-full flex items-center justify-center mb-6 text-3xl">🍃</div>
+          <h3 class="text-xl font-black text-white mb-2 tracking-tight">No hay tareas asociadas</h3>
+          <p class="text-xs font-bold text-[#9db4a9] mb-8 max-w-xs text-center leading-relaxed uppercase tracking-widest opacity-60">
+            Usa la etiqueta en el cronómetro para empezar a ver datos aquí.
+          </p>
+        </div>
+      </div>
+
       <section class="border border-[#e07a5f]/20 bg-[#e07a5f]/5 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-6 mx-12">
         <div class="flex items-start gap-4">
           <span class="text-2xl mt-1">🍂</span>
@@ -118,13 +211,21 @@
 </template>
 
 <script setup lang="ts">
+
 import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { format, isValid } from 'date-fns';
+import { es } from 'date-fns/locale';
+
 import AppLayout from '@/layout/AppLayout.vue'
 import Color from '@/components/ColorCircle.vue'
 import CreateTaskModal from '@/components/tasks/CreateTaskModal.vue'
 import DeleteTaskModal from '@/components/tasks/DeleteTaskModal.vue'
 import UpdateTaskModal from '@/components/tasks/UpdateTaskModal.vue'
 import DeleteProjectModal from '@/components/projects/DeleteProjectModal.vue'
+
+import DeleteTimeEntryModal from '@/components/time_entries/DeleteTimeEntryModal.vue';
+import CloneEntryTime from '@/components/time_entries/CloneEntryTime.vue';
+
 
 import pb from '@/lib/pocketbase';
 import formattedTime from '@/lib/time';
@@ -137,6 +238,21 @@ const tasks = ref<any[]>([]);
 const entries = ref<any[]>([]);
 
 const loading = ref(false);
+
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return '---';
+  const d = new Date(dateStr);
+  return isValid(d) ? format(d, "eee, d 'de' MMM", { locale: es }) : '---';
+};
+
+const formatRange = (startStr: string, endStr: string) => {
+  const start = new Date(startStr);
+  const end = endStr ? new Date(endStr) : null;
+  if (!isValid(start)) return '--:--';
+  const sFormatted = format(start, 'HH:mm');
+  const eFormatted = (end && isValid(end)) ? format(end, 'HH:mm') : '...';
+  return `${sFormatted} — ${eFormatted}`;
+};
 
 const suscribeRealTimeTask = async () => {
   const filterString = `project = "${props.id}"`;

@@ -125,7 +125,6 @@ import ColorCircle from '@/components/ColorCircle.vue';
 import pb from '@/lib/pocketbase';
 import { Tag } from '@vicons/tabler';
 
-// ... (tus otros imports de componentes)
 
 const entries = ref<any[]>([]);
 const loading = ref(false);
